@@ -126,8 +126,67 @@ export class ListingPage implements IModule {
     }
 
     // Instantiate and handle form submission for #add-multi-image
-    // TODO: 
+    const addMultiImageForm = document.querySelector("#add-multi-image");
+    if (addMultiImageForm) {
+      const webflowForm = new WebflowForm(addMultiImageForm as HTMLElement);
+      const form = webflowForm.getForm();
 
+      // Add hidden inputs for memberstackId and listingId
+      const memberstackIdInput = document.createElement("input");
+      memberstackIdInput.type = "hidden";
+      memberstackIdInput.name = "memberstackId";
+      memberstackIdInput.value = "mem-cmh36kq9w001e0svqbmggf3tf";
+      form.appendChild(memberstackIdInput);
+
+      const listingIdInput = document.createElement("input");
+      listingIdInput.type = "hidden";
+      listingIdInput.name = "listingId";
+      listingIdInput.value = this.itemSlug || "";
+      form.appendChild(listingIdInput);
+
+      console.log("Added hidden inputs to add-multi-image form:");
+      console.log(" memberstackId:", memberstackIdInput.value);
+      console.log(" listingId:", listingIdInput.value);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        console.log("Add multi-image form submitted");
+
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            console.log("Form submission successful");
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Success);
+              // Refresh page after a short delay to show success message
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              // In manual mode, refresh immediately without delay
+              window.location.reload();
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("Form submission failed:", response.status, errorText);
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Error);
+            }
+          }
+        } catch (error) {
+          console.error("Error submitting form:", error);
+          if (webflowForm.isAutoMode()) {
+            webflowForm.setState(FormState.Error);
+          }
+        }
+      });
+    }
 
     // Find all buttons with class w-button
     const buttons = document.querySelectorAll("[sse-action='delete-multi-image']");
