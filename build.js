@@ -58,8 +58,17 @@ function loadEnvFile() {
     }
   });
 
-  console.log(`✓ Loaded ${Object.keys(envVars).length} environment variables`);
-  return envVars;
+  console.log(`✓ Loaded ${Object.keys(envVars).length} environment variables from file`);
+
+  // Merge with process.env (Netlify/CI environment variables take precedence)
+  const finalEnvVars = {
+    ...envVars,
+    ...(process.env.API_BASE_URL && { API_BASE_URL: process.env.API_BASE_URL }),
+    ...(process.env.MEMBERSTACK_ID && { MEMBERSTACK_ID: process.env.MEMBERSTACK_ID }),
+  };
+
+  console.log('Final environment variables:', Object.keys(finalEnvVars));
+  return finalEnvVars;
 }
 
 // Single entry point for bundling (only index.ts is loaded in Webflow)
