@@ -21,6 +21,12 @@ A TypeScript-based template for building custom Webflow site extensions using th
 npm install
 ```
 
+```bash
+npm run build - Development (uses .env)
+npm run build:test - Test (uses .env.test)
+npm run build:prod - Production (uses .env.prod)
+``` 
+
 ### 2. Configure Your Project
 
 **Update `package.json`:**
