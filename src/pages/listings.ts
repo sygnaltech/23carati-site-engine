@@ -78,8 +78,54 @@ button.setAttribute("item-slug", this.itemSlug || "");
     });
 
     // Handle delete button clicks
+    buttons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.handleDeleteButtonClick(button);
+      });
+    });
 
     console.log("Listings page exec complete");
+  }
+
+  async handleDeleteButtonClick(button: Element): Promise<void> {
+    const memberstackId = "mem-cmh36kq9w001e0svqbmggf3tf";
+    const listingId = button.getAttribute("item-slug") || "";
+    const photoIndex = button.getAttribute("item-index") || "";
+
+    console.log("Delete button clicked:");
+    console.log(" memberstackId:", memberstackId);
+    console.log(" listingId:", listingId);
+    console.log(" photoIndex:", photoIndex);
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8787/api/v1/forms/delete-multi-image",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            memberstackId: memberstackId,
+            listingId: listingId,
+            photoIndex: photoIndex,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        console.log("Delete successful, refreshing page");
+        window.location.reload();
+      } else {
+        const errorText = await response.text();
+        console.error("Delete failed:", response.status, errorText);
+        alert(`Failed to delete image: ${response.status} ${errorText}`);
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      alert(`Error deleting image: ${error}`);
+    }
   }
 }
 
