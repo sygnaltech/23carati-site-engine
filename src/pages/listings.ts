@@ -61,8 +61,12 @@ export class ListingPage implements IModule {
 
     console.log("Item Slug:", this.itemSlug);
 
+
+
+
+    
     // Find all buttons with class w-button
-    const buttons = document.querySelectorAll(".w-button");
+    const buttons = document.querySelectorAll("[sse-action='delete-multi-image']");
     console.log("Found buttons:", buttons.length);
 
     buttons.forEach((button) => {
