@@ -17,23 +17,6 @@ export class ListingPage implements IModule {
   constructor() {}
 
   setup(): void {
-    // Extract key information from <html> node
-    const htmlElement = document.documentElement;
-
-    this.domain = htmlElement.getAttribute("data-wf-domain");
-    this.pageId = htmlElement.getAttribute("data-wf-page");
-    this.siteId = htmlElement.getAttribute("data-wf-site");
-    this.lang = htmlElement.getAttribute("lang");
-    this.collectionId = htmlElement.getAttribute("data-wf-collection");
-    this.itemSlug = htmlElement.getAttribute("data-wf-item-slug");
-
-    console.log("ListingPage setup:");
-    console.log(" Domain:", this.domain);
-    console.log(" Page ID:", this.pageId);
-    console.log(" Site ID:", this.siteId);
-    console.log(" Language:", this.lang);
-    console.log(" Collection ID:", this.collectionId);
-    console.log(" Item Slug:", this.itemSlug);
   }
 
   getCollectionListItemIndex(element: Element): number {
@@ -58,6 +41,25 @@ export class ListingPage implements IModule {
 
   async exec(): Promise<void> {
     console.log("Listings page exec");
+    // Extract key information from <html> node
+    const htmlElement = document.documentElement;
+
+    this.domain = htmlElement.getAttribute("data-wf-domain");
+    this.pageId = htmlElement.getAttribute("data-wf-page");
+    this.siteId = htmlElement.getAttribute("data-wf-site");
+    this.lang = htmlElement.getAttribute("lang");
+    this.collectionId = htmlElement.getAttribute("data-wf-collection");
+    this.itemSlug = htmlElement.getAttribute("data-wf-item-slug");
+
+    console.log("ListingPage setup:");
+    console.log(" Domain:", this.domain);
+    console.log(" Page ID:", this.pageId);
+    console.log(" Site ID:", this.siteId);
+    console.log(" Language:", this.lang);
+    console.log(" Collection ID:", this.collectionId);
+    console.log(" Item Slug:", this.itemSlug);
+
+    console.log("Item Slug:", this.itemSlug);
 
     // Find all buttons with class w-button
     const buttons = document.querySelectorAll(".w-button");
@@ -74,6 +76,8 @@ button.setAttribute("item-slug", this.itemSlug || "");
         console.log("Set itemIndex attribute:", itemIndex, "on button:", button);
       }
     });
+
+    // Handle delete button clicks
 
     console.log("Listings page exec complete");
   }
