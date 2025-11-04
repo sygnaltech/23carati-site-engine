@@ -4,6 +4,7 @@
  */
 
 import { IModule, page } from "@sygnal/sse";
+import { WebflowForm, FormState } from "../elements/webflow-form";
 
 @page("/listings/*")
 export class ListingPage implements IModule {
@@ -61,10 +62,52 @@ export class ListingPage implements IModule {
 
     console.log("Item Slug:", this.itemSlug);
 
+    // Instantiate and handle form submission for #set-image
+    const setImageForm = document.querySelector("#set-image");
+    if (setImageForm) {
+      const webflowForm = new WebflowForm(setImageForm as HTMLElement);
+      const form = webflowForm.getForm();
 
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        console.log("Set image form submitted");
 
+        const formData = new FormData(form);
 
-    
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            console.log("Form submission successful");
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Success);
+              // Refresh page after a short delay to show success message
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              // In manual mode, refresh immediately without delay
+              window.location.reload();
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("Form submission failed:", response.status, errorText);
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Error);
+            }
+          }
+        } catch (error) {
+          console.error("Error submitting form:", error);
+          if (webflowForm.isAutoMode()) {
+            webflowForm.setState(FormState.Error);
+          }
+        }
+      });
+    }
+
     // Find all buttons with class w-button
     const buttons = document.querySelectorAll("[sse-action='delete-multi-image']");
     console.log("Found buttons:", buttons.length);

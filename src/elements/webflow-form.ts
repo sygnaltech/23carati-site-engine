@@ -18,6 +18,7 @@ export class WebflowForm {
   private formElement: HTMLFormElement;
   private successElement: HTMLElement | null;
   private errorElement: HTMLElement | null;
+  private autoMode: boolean;
 
   constructor(element: HTMLElement) {
     // Determine if the element is the wrapper or the form itself
@@ -44,6 +45,10 @@ export class WebflowForm {
     // Find the success and error elements
     this.successElement = this.wrapperElement.querySelector(".w-form-done");
     this.errorElement = this.wrapperElement.querySelector(".w-form-fail");
+
+    // Check sse-form-mode-auto attribute (defaults to true)
+    const autoModeAttr = this.formElement.getAttribute("sse-form-mode-auto");
+    this.autoMode = autoModeAttr !== "false";
 
     // Initialize to default state
     this.setState(FormState.Default);
@@ -132,6 +137,13 @@ export class WebflowForm {
    */
   getErrorElement(): HTMLElement | null {
     return this.errorElement;
+  }
+
+  /**
+   * Check if auto mode is enabled
+   */
+  isAutoMode(): boolean {
+    return this.autoMode;
   }
 
   /**
