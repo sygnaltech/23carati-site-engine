@@ -5,6 +5,7 @@
 
 import { IModule, page } from "@sygnal/sse";
 import { WebflowForm, FormState } from "../elements/webflow-form";
+import { config, api } from "../config";
 
 @page("/listings/*")
 export class ListingPage implements IModule {
@@ -72,7 +73,7 @@ export class ListingPage implements IModule {
       const memberstackIdInput = document.createElement("input");
       memberstackIdInput.type = "hidden";
       memberstackIdInput.name = "memberstackId";
-      memberstackIdInput.value = "mem-cmh36kq9w001e0svqbmggf3tf";
+      memberstackIdInput.value = config.memberstackId;
       form.appendChild(memberstackIdInput);
 
       const listingIdInput = document.createElement("input");
@@ -135,7 +136,7 @@ export class ListingPage implements IModule {
       const memberstackIdInput = document.createElement("input");
       memberstackIdInput.type = "hidden";
       memberstackIdInput.name = "memberstackId";
-      memberstackIdInput.value = "mem-cmh36kq9w001e0svqbmggf3tf";
+      memberstackIdInput.value = config.memberstackId;
       form.appendChild(memberstackIdInput);
 
       const listingIdInput = document.createElement("input");
@@ -216,7 +217,7 @@ button.setAttribute("item-slug", this.itemSlug || "");
   }
 
   async handleDeleteButtonClick(button: Element): Promise<void> {
-    const memberstackId = "mem-cmh36kq9w001e0svqbmggf3tf";
+    const memberstackId = config.memberstackId;
     const listingId = button.getAttribute("item-slug") || "";
     const photoIndex = button.getAttribute("item-index") || "";
 
@@ -227,7 +228,7 @@ button.setAttribute("item-slug", this.itemSlug || "");
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8787/api/v1/forms/delete-multi-image",
+        api.endpoints.deleteMultiImage,
         {
           method: "POST",
           headers: {

@@ -36,12 +36,12 @@ export const config = {
   /**
    * API base URL
    */
-  apiBaseUrl: process.env.API_BASE_URL || 'http://127.0.0.1:8787/api/v1',
+  apiBaseUrl: process.env.API_BASE_URL,
 
   /**
    * Memberstack ID for the current environment
    */
-  memberstackId: process.env.MEMBERSTACK_ID || '',
+  memberstackId: process.env.MEMBERSTACK_ID,
 };
 
 /**
