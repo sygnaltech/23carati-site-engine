@@ -21,15 +21,11 @@ import { Site } from "./site";
 // PAGES - Import all pages to trigger @page decorator
 // ============================================================
 import "./pages/home";
-import "./pages/blog";
-import "./pages/about";
-// Add more page imports here as you create them
+import "./pages/listings";
 
 // ============================================================
 // COMPONENTS - Import all components to trigger @component decorator
 // ============================================================
-import "./components/test";
-import "./components/example";
 // Add more component imports here as you create them
 
 /**
