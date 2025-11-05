@@ -22,6 +22,7 @@ import { Site } from "./site";
 // ============================================================
 import "./pages/home";
 import "./pages/listings";
+import "./pages/overview";
 
 // ============================================================
 // COMPONENTS - Import all components to trigger @component decorator
