@@ -3,20 +3,16 @@
  * Home page module for the root route
  */
 
-import { IModule, page } from "@sygnal/sse";
+import { page, PageBase } from "@sygnal/sse-core";
 
 @page('/')
-export class HomePage implements IModule {
+export class HomePage extends PageBase {
 
-  constructor() {
+  protected onPrepare(): void {
+    console.log('Page ID:', this.pageInfo.pageId);
   }
 
-  setup(): void {
-    // Synchronous setup
-  }
-
-  async exec(): Promise<void> {
-    // Asynchronous execution
+  protected async onLoad(): Promise<void> {
     console.log('HomePage initialized');
   }
 

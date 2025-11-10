@@ -3,22 +3,15 @@
  * Handles all /listings/* routes with wildcard matching
  */
 
-import { IModule, page } from "@sygnal/sse";
+import { page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm, FormState } from "../elements/webflow-form";
 import { config, api } from "../config";
 
-@page("/listings/*")
-export class ListingPage implements IModule {
-  domain: string | null = null;
-  pageId: string | null = null;
-  siteId: string | null = null;
-  lang: string | null = null;
-  collectionId: string | null = null;
-  itemSlug: string | null = null;
+@page("/wholesale/pietre/*")
+export class ListingPage extends PageBase {
 
-  constructor() {}
-
-  setup(): void {
+  protected onPrepare(): void {
+    console.log('Page ID:', this.pageInfo.pageId);
   }
 
   getCollectionListItemIndex(element: Element): number {
@@ -41,27 +34,10 @@ export class ListingPage implements IModule {
     return -1;
   }
 
-  async exec(): Promise<void> {
+  protected async onLoad(): Promise<void> {
     console.log("Listings page exec");
     // Extract key information from <html> node
     const htmlElement = document.documentElement;
-
-    this.domain = htmlElement.getAttribute("data-wf-domain");
-    this.pageId = htmlElement.getAttribute("data-wf-page");
-    this.siteId = htmlElement.getAttribute("data-wf-site");
-    this.lang = htmlElement.getAttribute("lang");
-    this.collectionId = htmlElement.getAttribute("data-wf-collection");
-    this.itemSlug = htmlElement.getAttribute("data-wf-item-slug");
-
-    console.log("ListingPage setup:");
-    console.log(" Domain:", this.domain);
-    console.log(" Page ID:", this.pageId);
-    console.log(" Site ID:", this.siteId);
-    console.log(" Language:", this.lang);
-    console.log(" Collection ID:", this.collectionId);
-    console.log(" Item Slug:", this.itemSlug);
-
-    console.log("Item Slug:", this.itemSlug);
 
     // Instantiate and handle form submission for #set-image
     const setImageForm = document.querySelector("#set-image");
@@ -79,7 +55,7 @@ export class ListingPage implements IModule {
       const listingIdInput = document.createElement("input");
       listingIdInput.type = "hidden";
       listingIdInput.name = "listingId";
-      listingIdInput.value = this.itemSlug || "";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
       form.appendChild(listingIdInput);
 
       console.log("Added hidden inputs to form:");
@@ -142,7 +118,7 @@ export class ListingPage implements IModule {
       const listingIdInput = document.createElement("input");
       listingIdInput.type = "hidden";
       listingIdInput.name = "listingId";
-      listingIdInput.value = this.itemSlug || "";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
       form.appendChild(listingIdInput);
 
       console.log("Added hidden inputs to add-multi-image form:");
@@ -196,7 +172,7 @@ export class ListingPage implements IModule {
     buttons.forEach((button) => {
       const itemIndex = this.getCollectionListItemIndex(button);
 
-button.setAttribute("item-slug", this.itemSlug || "");
+button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
 
       if (itemIndex !== -1) {
         // Set the itemIndex attribute on the button
@@ -256,6 +232,7 @@ button.setAttribute("item-slug", this.itemSlug || "");
     }
   }
 }
+
 
 // <input type="text" name="memberstackId" value="mem-cmh36kq9w001e0svqbmggf3tf" />
 // <input type="text" name="listingId" value="item-1" />

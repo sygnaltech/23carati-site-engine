@@ -11,8 +11,8 @@
 
 import { VERSION } from "./version";
 import { routeDispatcher, initializeComponents, getRegistryStats } from "./routes";
-import { initSSE } from "@sygnal/sse";
-import { ComponentManager } from "@sygnal/sse";
+import { initSSE } from "@sygnal/sse-core";
+import { ComponentManager } from "@sygnal/sse-core";
 import type { SiteGlobalData } from "./types";
 
 // Global vars
