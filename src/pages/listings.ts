@@ -3,22 +3,28 @@
  * Handles all /listings/* routes with wildcard matching
  */
 
-import { IModule, page } from "@sygnal/sse";
+import { page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm, FormState } from "../elements/webflow-form";
 import { config, api } from "../config";
 
-@page("/listings/*")
-export class ListingPage implements IModule {
-  domain: string | null = null;
-  pageId: string | null = null;
-  siteId: string | null = null;
-  lang: string | null = null;
-  collectionId: string | null = null;
-  itemSlug: string | null = null;
+export enum PageMode {
+  View = 'view',
+  Edit = 'edit'
+}
 
-  constructor() {}
+@page("/wholesale/pietre/*")
+export class ListingPage extends PageBase {
+  mode: PageMode = PageMode.View;
 
-  setup(): void {
+  protected onPrepare(): void {
+    console.log('Page ID:', this.pageInfo.pageId);
+
+    // Get mode from query string, default to 'view'
+    const urlParams = new URLSearchParams(window.location.search);
+    const modeParam = urlParams.get('mode')?.toLowerCase();
+    this.mode = modeParam === 'edit' ? PageMode.Edit : PageMode.View;
+
+    console.log('Page mode:', this.mode);
   }
 
   getCollectionListItemIndex(element: Element): number {
@@ -38,30 +44,32 @@ export class ListingPage implements IModule {
     }
 
     console.log("No collection item found for element:", element);
-    return -1;
-  }
+    return -1; 
+  } 
 
-  async exec(): Promise<void> {
+  protected async onLoad(): Promise<void> {
     console.log("Listings page exec");
-    // Extract key information from <html> node
-    const htmlElement = document.documentElement;
+    console.log('Page mode:', this.mode);
 
-    this.domain = htmlElement.getAttribute("data-wf-domain");
-    this.pageId = htmlElement.getAttribute("data-wf-page");
-    this.siteId = htmlElement.getAttribute("data-wf-site");
-    this.lang = htmlElement.getAttribute("lang");
-    this.collectionId = htmlElement.getAttribute("data-wf-collection");
-    this.itemSlug = htmlElement.getAttribute("data-wf-item-slug");
+    // Only run the following code in Edit mode
+    if (this.mode !== PageMode.Edit) {
+      console.log("Not in edit mode, skipping edit-specific logic"); 
+      return;
+    }
 
-    console.log("ListingPage setup:");
-    console.log(" Domain:", this.domain);
-    console.log(" Page ID:", this.pageId);
-    console.log(" Site ID:", this.siteId);
-    console.log(" Language:", this.lang);
-    console.log(" Collection ID:", this.collectionId);
-    console.log(" Item Slug:", this.itemSlug);
-
-    console.log("Item Slug:", this.itemSlug);
+    // Handle mode-based visibility
+    console.log("Setting visibility for mode:", this.mode);
+    const allModeElements = document.querySelectorAll('[sse-mode]');
+    allModeElements.forEach((element) => {
+      const modeAttr = element.getAttribute('sse-mode');
+      if (modeAttr === this.mode) {
+        console.log("Showing element for mode", this.mode, ":", element);
+        (element as HTMLElement).style.display = 'block';
+      } else {
+        console.log("Hiding element for mode", this.mode, ":", element);
+        (element as HTMLElement).style.display = 'none'; 
+      }
+    });
 
     // Instantiate and handle form submission for #set-image
     const setImageForm = document.querySelector("#set-image");
@@ -79,7 +87,7 @@ export class ListingPage implements IModule {
       const listingIdInput = document.createElement("input");
       listingIdInput.type = "hidden";
       listingIdInput.name = "listingId";
-      listingIdInput.value = this.itemSlug || "";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
       form.appendChild(listingIdInput);
 
       console.log("Added hidden inputs to form:");
@@ -142,7 +150,7 @@ export class ListingPage implements IModule {
       const listingIdInput = document.createElement("input");
       listingIdInput.type = "hidden";
       listingIdInput.name = "listingId";
-      listingIdInput.value = this.itemSlug || "";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
       form.appendChild(listingIdInput);
 
       console.log("Added hidden inputs to add-multi-image form:");
@@ -196,7 +204,7 @@ export class ListingPage implements IModule {
     buttons.forEach((button) => {
       const itemIndex = this.getCollectionListItemIndex(button);
 
-button.setAttribute("item-slug", this.itemSlug || "");
+button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
 
       if (itemIndex !== -1) {
         // Set the itemIndex attribute on the button
@@ -256,6 +264,7 @@ button.setAttribute("item-slug", this.itemSlug || "");
     }
   }
 }
+
 
 // <input type="text" name="memberstackId" value="mem-cmh36kq9w001e0svqbmggf3tf" />
 // <input type="text" name="listingId" value="item-1" />
