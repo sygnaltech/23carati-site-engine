@@ -7,11 +7,24 @@ import { page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm, FormState } from "../elements/webflow-form";
 import { config, api } from "../config";
 
+export enum PageMode {
+  View = 'view',
+  Edit = 'edit'
+}
+
 @page("/wholesale/pietre/*")
 export class ListingPage extends PageBase {
+  mode: PageMode = PageMode.View;
 
   protected onPrepare(): void {
     console.log('Page ID:', this.pageInfo.pageId);
+
+    // Get mode from query string, default to 'view'
+    const urlParams = new URLSearchParams(window.location.search);
+    const modeParam = urlParams.get('mode')?.toLowerCase();
+    this.mode = modeParam === 'edit' ? PageMode.Edit : PageMode.View;
+
+    console.log('Page mode:', this.mode);
   }
 
   getCollectionListItemIndex(element: Element): number {
@@ -31,13 +44,32 @@ export class ListingPage extends PageBase {
     }
 
     console.log("No collection item found for element:", element);
-    return -1;
-  }
+    return -1; 
+  } 
 
   protected async onLoad(): Promise<void> {
     console.log("Listings page exec");
-    // Extract key information from <html> node
-    const htmlElement = document.documentElement;
+    console.log('Page mode:', this.mode);
+
+    // Only run the following code in Edit mode
+    if (this.mode !== PageMode.Edit) {
+      console.log("Not in edit mode, skipping edit-specific logic"); 
+      return;
+    }
+
+    // Handle mode-based visibility
+    console.log("Setting visibility for mode:", this.mode);
+    const allModeElements = document.querySelectorAll('[sse-mode]');
+    allModeElements.forEach((element) => {
+      const modeAttr = element.getAttribute('sse-mode');
+      if (modeAttr === this.mode) {
+        console.log("Showing element for mode", this.mode, ":", element);
+        (element as HTMLElement).style.display = 'block';
+      } else {
+        console.log("Hiding element for mode", this.mode, ":", element);
+        (element as HTMLElement).style.display = 'none'; 
+      }
+    });
 
     // Instantiate and handle form submission for #set-image
     const setImageForm = document.querySelector("#set-image");
