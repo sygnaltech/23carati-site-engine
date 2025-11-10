@@ -5,10 +5,12 @@
 <!-- SITE ENGINE --> 
 <link rel="stylesheet" 
   href="https://23carati-site-engine.netlify.app/site.css"
+  test-href="https://23carati-site-engine-test.netlify.app/site.css"
   dev-href="http://127.0.0.1:3000/dist/site.css"
   > 
 <script defer 
   src="https://23carati-site-engine.netlify.app/index.js" 
+  test-src="https://23carati-site-engine-test.netlify.app/index.js" 
   dev-src="http://127.0.0.1:3000/dist/index.js"
   ></script>
 ```
