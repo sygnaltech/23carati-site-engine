@@ -121,7 +121,9 @@ export class ListingPage extends PageBase {
               .map((s) => s.trim())
               .filter(Boolean);
             Array.from(sel.options).forEach((opt) => {
-              opt.selected = vals.includes(opt.value) || vals.includes(opt.text);
+              const byValue = vals.indexOf(opt.value) !== -1;
+              const byText = vals.indexOf(opt.text) !== -1;
+              opt.selected = byValue || byText;
             });
           } else {
             sel.value = raw;
