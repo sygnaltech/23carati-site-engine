@@ -76,7 +76,7 @@ export class ListingPage extends PageBase {
     // Initialize field values from sse-field-value on inputs, options, and textareas
     try {
       const fieldNodes = document.querySelectorAll<HTMLElement>(
-        'input[sse-field-value], textarea[sse-field-value], option[sse-field-value]'
+        'input[sse-field-value], textarea[sse-field-value], select[sse-field-value], option[sse-field-value]'
       );
       console.log(`[Listings] Initializing ${fieldNodes.length} field(s) from sse-field-value`);
 
@@ -112,6 +112,26 @@ export class ListingPage extends PageBase {
           const ta = el as HTMLTextAreaElement;
           ta.value = valAttr;
           console.log('[Listings] Set textarea', { name: ta.name, value: ta.value });
+        } else if (tag === 'SELECT') {
+          const sel = el as HTMLSelectElement;
+          const raw = el.getAttribute('sse-field-value') ?? '';
+          if (sel.multiple) {
+            const vals = raw
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
+            Array.from(sel.options).forEach((opt) => {
+              opt.selected = vals.includes(opt.value) || vals.includes(opt.text);
+            });
+          } else {
+            sel.value = raw;
+            if (sel.value !== raw) {
+              const byText = Array.from(sel.options).find((o) => o.text === raw);
+              if (byText) sel.value = byText.value;
+            }
+          }
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          console.log('[Listings] Set select', { name: sel.name, value: sel.value, multiple: sel.multiple });
         } else if (tag === 'OPTION') {
           const opt = el as HTMLOptionElement;
           const shouldSelect = toBool(valAttr) || opt.value === valAttr;
