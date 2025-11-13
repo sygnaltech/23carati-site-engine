@@ -1,19 +1,26 @@
 
 # Integrating
 
+
+https://23carati-fa6115.webflow.io/wholesale/pietre/item-1?mode=edit
+
+
 ```html
 <!-- SITE ENGINE --> 
 <link rel="stylesheet" 
+  name="Site Engine"
   href="https://23carati-site-engine.netlify.app/site.css"
   test-href="https://23carati-site-engine-test.netlify.app/site.css"
   dev-href="http://127.0.0.1:3000/dist/site.css"
   > 
 <script defer 
+  name="Site Engine"
   src="https://23carati-site-engine.netlify.app/index.js" 
   test-src="https://23carati-site-engine-test.netlify.app/index.js" 
   dev-src="http://127.0.0.1:3000/dist/index.js"
   ></script>
 ```
+
 
 # Environments 
 

@@ -23,7 +23,7 @@ export class ListingPage extends PageBase {
     const urlParams = new URLSearchParams(window.location.search);
     const modeParam = urlParams.get('mode')?.toLowerCase();
     this.mode = modeParam === 'edit' ? PageMode.Edit : PageMode.View;
-
+    console.log('[Listings] Mode detection:', { queryParam: modeParam, resolvedMode: this.mode });
     console.log('Page mode:', this.mode);
   }
 
@@ -74,6 +74,7 @@ export class ListingPage extends PageBase {
     // Instantiate and handle form submission for #set-image
     const setImageForm = document.querySelector("#set-image");
     if (setImageForm) {
+      console.log('[Listings] Found #set-image form. Mounting handler...');
       const webflowForm = new WebflowForm(setImageForm as HTMLElement);
       const form = webflowForm.getForm();
 
@@ -133,10 +134,85 @@ export class ListingPage extends PageBase {
         }
       });
     }
+    if (!setImageForm) {
+      console.log('[Listings] #set-image form not found.');
+    }
+
+    // Instantiate and handle form submission for #set-certificate
+    const setCertificateForm = document.querySelector("#set-certificate");
+    if (setCertificateForm) {
+      console.log('[Listings] Found #set-certificate form. Mounting handler...');
+      const webflowForm = new WebflowForm(setCertificateForm as HTMLElement);
+      const form = webflowForm.getForm();
+
+      // Add hidden inputs for memberstackId and listingId
+      const memberstackIdInput = document.createElement("input");
+      memberstackIdInput.type = "hidden";
+      memberstackIdInput.name = "memberstackId";
+      memberstackIdInput.value = config.memberstackId;
+      form.appendChild(memberstackIdInput);
+
+      const listingIdInput = document.createElement("input");
+      listingIdInput.type = "hidden";
+      listingIdInput.name = "listingId";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
+      form.appendChild(listingIdInput);
+
+      console.log("Added hidden inputs to certificate form:");
+      console.log(" memberstackId:", memberstackIdInput.value);
+      console.log(" listingId:", listingIdInput.value);
+
+      // Resolve endpoint and log for visibility
+      const certificateEndpoint = api.url('/forms/upload-file');
+      console.log('[Listings] Certificate upload endpoint:', certificateEndpoint);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        console.log("Set certificate form submitted");
+
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch(certificateEndpoint, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            console.log("Certificate upload successful");
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Success);
+              // Refresh page after a short delay to show success message
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              // In manual mode, refresh immediately without delay
+              window.location.reload();
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("Certificate upload failed:", response.status, errorText);
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Error);
+            }
+          }
+        } catch (error) {
+          console.error("Error uploading certificate:", error);
+          if (webflowForm.isAutoMode()) {
+            webflowForm.setState(FormState.Error);
+          }
+        }
+      });
+    }
+    if (!setCertificateForm) {
+      console.log('[Listings] #set-certificate form not found.');
+    }
 
     // Instantiate and handle form submission for #add-multi-image
     const addMultiImageForm = document.querySelector("#add-multi-image");
     if (addMultiImageForm) {
+      console.log('[Listings] Found #add-multi-image form. Mounting handler...');
       const webflowForm = new WebflowForm(addMultiImageForm as HTMLElement);
       const form = webflowForm.getForm();
 
@@ -195,6 +271,9 @@ export class ListingPage extends PageBase {
           }
         }
       });
+    }
+    if (!addMultiImageForm) {
+      console.log('[Listings] #add-multi-image form not found.');
     }
 
     // Find all buttons with class w-button
