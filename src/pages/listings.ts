@@ -43,6 +43,8 @@ export class ListingPage extends PageBase {
       return index;
     }
 
+    
+
     console.log("No collection item found for element:", element);
     return -1; 
   } 
@@ -70,6 +72,58 @@ export class ListingPage extends PageBase {
         (element as HTMLElement).style.display = 'none'; 
       }
     });
+
+    // Initialize field values from sse-field-value on inputs, options, and textareas
+    try {
+      const fieldNodes = document.querySelectorAll<HTMLElement>(
+        'input[sse-field-value], textarea[sse-field-value], option[sse-field-value]'
+      );
+      console.log(`[Listings] Initializing ${fieldNodes.length} field(s) from sse-field-value`);
+
+      const toBool = (v: string): boolean => {
+        const s = v.trim().toLowerCase();
+        return s === 'true' || s === '1' || s === 'yes' || s === 'on';
+      };
+
+      fieldNodes.forEach((el) => {
+        const valAttr = el.getAttribute('sse-field-value') ?? '';
+        const tag = el.tagName;
+
+        if (tag === 'INPUT') {
+          const input = el as HTMLInputElement;
+          const type = (input.type || '').toLowerCase();
+          if (type === 'checkbox') {
+            input.checked = toBool(valAttr);
+            // Do not override existing value; checkbox value often meaningful
+            console.log('[Listings] Set checkbox', { name: input.name, checked: input.checked });
+          } else if (type === 'radio') {
+            // Prefer matching by value; otherwise treat truthy as checked
+            if (input.value === valAttr) {
+              input.checked = true;
+            } else if (toBool(valAttr)) {
+              input.checked = true;
+            }
+            console.log('[Listings] Set radio', { name: input.name, value: input.value, checked: input.checked });
+          } else {
+            input.value = valAttr;
+            console.log('[Listings] Set input', { name: input.name, type, value: input.value });
+          }
+        } else if (tag === 'TEXTAREA') {
+          const ta = el as HTMLTextAreaElement;
+          ta.value = valAttr;
+          console.log('[Listings] Set textarea', { name: ta.name, value: ta.value });
+        } else if (tag === 'OPTION') {
+          const opt = el as HTMLOptionElement;
+          const shouldSelect = toBool(valAttr) || opt.value === valAttr;
+          if (shouldSelect) opt.selected = true;
+          // Optionally set value if empty
+          if (!opt.value) opt.value = valAttr;
+          console.log('[Listings] Set option', { value: opt.value, selected: opt.selected });
+        }
+      });
+    } catch (e) {
+      console.error('[Listings] Error initializing sse-field-value fields:', e);
+    }
 
     // Instantiate and handle form submission for #set-image
     const setImageForm = document.querySelector("#set-image");
@@ -207,6 +261,76 @@ export class ListingPage extends PageBase {
     }
     if (!setCertificateForm) {
       console.log('[Listings] #set-certificate form not found.');
+    }
+
+    // Instantiate and handle form submission for #update-data
+    const updateDataForm = document.querySelector("#update-data");
+    if (updateDataForm) {
+      console.log('[Listings] Found #update-data form. Mounting handler...');
+      const webflowForm = new WebflowForm(updateDataForm as HTMLElement);
+      const form = webflowForm.getForm();
+
+      // Add hidden inputs for memberstackId and listingId
+      const memberstackIdInput = document.createElement("input");
+      memberstackIdInput.type = "hidden";
+      memberstackIdInput.name = "memberstackId";
+      memberstackIdInput.value = config.memberstackId;
+      form.appendChild(memberstackIdInput);
+
+      const listingIdInput = document.createElement("input");
+      listingIdInput.type = "hidden";
+      listingIdInput.name = "listingId";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
+      form.appendChild(listingIdInput);
+
+      console.log("Added hidden inputs to update-data form:");
+      console.log(" memberstackId:", memberstackIdInput.value);
+      console.log(" listingId:", listingIdInput.value);
+
+      // Resolve endpoint and log
+      const updateEndpoint = api.url('/forms/update-listing');
+      console.log('[Listings] Update listing endpoint:', updateEndpoint);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        console.log("Update data form submitted");
+
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch(updateEndpoint, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            console.log("Update listing successful");
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Success);
+              // Refresh page after a short delay to show success message
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              // In manual mode, refresh immediately without delay
+              window.location.reload();
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("Update listing failed:", response.status, errorText);
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Error);
+            }
+          }
+        } catch (error) {
+          console.error("Error updating listing:", error);
+          if (webflowForm.isAutoMode()) {
+            webflowForm.setState(FormState.Error);
+          }
+        }
+      });
+    } else {
+      console.log('[Listings] #update-data form not found.');
     }
 
     // Instantiate and handle form submission for #add-multi-image

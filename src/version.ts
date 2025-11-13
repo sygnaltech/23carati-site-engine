@@ -1,4 +1,4 @@
 
 // version.ts
-export const VERSION = '0.1.3'; // Update this manually on each release
+export const VERSION = '0.1.4'; // Update this manually on each release
 
