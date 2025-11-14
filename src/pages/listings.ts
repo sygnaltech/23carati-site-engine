@@ -171,6 +171,11 @@ export class ListingPage extends PageBase {
       console.log(" memberstackId:", memberstackIdInput.value);
       console.log(" listingId:", listingIdInput.value);
 
+      // Resolve endpoint and log
+      const setImageEndpoint = api.url('/forms/upload-image');
+      form.action = setImageEndpoint;
+      console.log('[Listings] Set image endpoint:', setImageEndpoint);
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         console.log("Set image form submitted");
@@ -178,7 +183,7 @@ export class ListingPage extends PageBase {
         const formData = new FormData(form);
 
         try {
-          const response = await fetch(form.action, {
+          const response = await fetch(setImageEndpoint, {
             method: "POST",
             body: formData,
           });
@@ -240,6 +245,7 @@ export class ListingPage extends PageBase {
 
       // Resolve endpoint and log for visibility
       const certificateEndpoint = api.url('/forms/upload-file');
+      form.action = certificateEndpoint;
       console.log('[Listings] Certificate upload endpoint:', certificateEndpoint);
 
       form.addEventListener("submit", async (e) => {
@@ -379,6 +385,11 @@ export class ListingPage extends PageBase {
       console.log(" memberstackId:", memberstackIdInput.value);
       console.log(" listingId:", listingIdInput.value);
 
+      // Resolve endpoint and log
+      const addMultiImageEndpoint = api.url('/forms/upload-multi-image');
+      form.action = addMultiImageEndpoint;
+      console.log('[Listings] Add multi-image endpoint:', addMultiImageEndpoint);
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         console.log("Add multi-image form submitted");
@@ -386,7 +397,7 @@ export class ListingPage extends PageBase {
         const formData = new FormData(form);
 
         try {
-          const response = await fetch(form.action, {
+          const response = await fetch(addMultiImageEndpoint, {
             method: "POST",
             body: formData,
           });
