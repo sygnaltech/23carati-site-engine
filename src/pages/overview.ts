@@ -1,12 +1,13 @@
 /**
  * Page | Dashboard Overview
- * For dashboard overview page at /wholesale/dashboard/overview 
+ * For dashboard overview page at /wholesale/dashboard/overview
  * Handles image uploads and deletions for listings
  */
 
 import { IModule, page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm, FormState } from "../elements/webflow-form";
 import { config, api } from "../config";
+import { LoaderOverlayComponent } from "../components/loader-overlay";
 
 @page("/wholesale/dashboard/overview")
 export class ListingPage extends PageBase {
@@ -90,6 +91,12 @@ export class ListingPage extends PageBase {
       return;
     }
 
+    // Get the loader overlay component and show "deleting-listing" message
+    const [loaderOverlay] = window.componentManager?.getComponentsByType<LoaderOverlayComponent>('loader-overlay') ?? [];
+    if (loaderOverlay) {
+      loaderOverlay.show('deleting-listing');
+    }
+
     try {
       const deleteEndpoint = api.url('/forms/delete-listing');
       console.log('[Overview] Delete endpoint:', deleteEndpoint);
@@ -111,10 +118,22 @@ export class ListingPage extends PageBase {
       } else {
         const errorText = await response.text();
         console.error('[Overview] Delete failed:', response.status, errorText);
+
+        // Hide loader on error
+        if (loaderOverlay) {
+          loaderOverlay.hide();
+        }
+
         alert(`Failed to delete listing: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error('[Overview] Error deleting listing:', error);
+
+      // Hide loader on error
+      if (loaderOverlay) {
+        loaderOverlay.hide();
+      }
+
       alert(`Error deleting listing: ${error}`);
     }
   }
@@ -126,6 +145,12 @@ export class ListingPage extends PageBase {
    */
   private async handleSetListingStatus(listingSlug: string, statusId: string): Promise<void> {
     console.log('[Overview] Setting listing status:', { listingSlug, statusId });
+
+    // Get the loader overlay component and show default message
+    const [loaderOverlay] = window.componentManager?.getComponentsByType<LoaderOverlayComponent>('loader-overlay') ?? [];
+    if (loaderOverlay) {
+      loaderOverlay.show('');
+    }
 
     try {
       const statusEndpoint = api.url('/forms/listing-set-status');
@@ -149,10 +174,22 @@ export class ListingPage extends PageBase {
       } else {
         const errorText = await response.text();
         console.error('[Overview] Status update failed:', response.status, errorText);
+
+        // Hide loader on error
+        if (loaderOverlay) {
+          loaderOverlay.hide();
+        }
+
         alert(`Failed to update listing status: ${response.status} ${errorText}`);
       }
     } catch (error) {
       console.error('[Overview] Error updating listing status:', error);
+
+      // Hide loader on error
+      if (loaderOverlay) {
+        loaderOverlay.hide();
+      }
+
       alert(`Error updating listing status: ${error}`);
     }
   }
