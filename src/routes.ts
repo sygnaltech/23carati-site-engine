@@ -24,11 +24,13 @@ import "./pages/home";
 import "./pages/listings";
 import "./pages/overview";
 import "./pages/add-listing"; 
+import "./pages/test/test-loader";
 
 // ============================================================
 // COMPONENTS - Import all components to trigger @component decorator
 // ============================================================
 // Add more component imports here as you create them
+import "./components/loader-overlay"; 
 
 /**
  * Create and configure route dispatcher

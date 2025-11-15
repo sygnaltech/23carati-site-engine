@@ -6,6 +6,8 @@
 import { page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm, FormState } from "../elements/webflow-form";
 import { config, api } from "../config";
+// import { displayMessage } from "../utils/loader";
+import { LoaderOverlayComponent } from "../components/loader-overlay";
 
 export enum PageMode {
   View = 'view',
@@ -49,6 +51,21 @@ export class ListingPage extends PageBase {
     return -1; 
   } 
 
+  protected displayMessage(messageKey: string): void {
+    // Get the loader-overlay component from the registry
+    const [loaderOverlay] = window.componentManager?.getComponentsByType<LoaderOverlayComponent>('loader-overlay') ?? [];
+
+    if (!loaderOverlay) {
+      console.warn('Loader-overlay component not found in registry');
+      return;
+    }
+
+    console.log('Loader-overlay component found');
+
+    // Show the loader overlay with the specified message
+    loaderOverlay.show(messageKey);
+  }
+
   protected async onLoad(): Promise<void> {
     console.log("Listings page exec");
     console.log('Page mode:', this.mode);
@@ -72,6 +89,19 @@ export class ListingPage extends PageBase {
         (element as HTMLElement).style.display = 'none'; 
       }
     });
+
+    // Initialize popup
+    // Get the loader-overlay component from the registry
+    const [loaderOverlay] = window.componentManager?.getComponentsByType<LoaderOverlayComponent>('loader-overlay') ?? [];
+
+    if (!loaderOverlay) {
+      console.warn('Loader-overlay component not found in registry');
+      return;
+    }
+
+    console.log('Loader-overlay component found');
+    
+
 
     // Initialize field values from sse-field-value on inputs, options, and textareas
     try {
@@ -178,6 +208,8 @@ export class ListingPage extends PageBase {
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        this.displayMessage("uploading-file");
+        
         console.log("Set image form submitted");
 
         const formData = new FormData(form);
@@ -250,6 +282,7 @@ export class ListingPage extends PageBase {
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        this.displayMessage("uploading-file");
         console.log("Set certificate form submitted");
 
         const formData = new FormData(form);
@@ -321,6 +354,7 @@ export class ListingPage extends PageBase {
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        this.displayMessage("");
         console.log("Update data form submitted");
 
         const formData = new FormData(form);
@@ -392,6 +426,7 @@ export class ListingPage extends PageBase {
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        this.displayMessage("uploading-file");
         console.log("Add multi-image form submitted");
 
         const formData = new FormData(form);
@@ -452,7 +487,7 @@ button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
     // Handle delete button clicks
     buttons.forEach((button) => {
       button.addEventListener("click", (e) => {
-        e.preventDefault();
+        e.preventDefault();        
         this.handleDeleteButtonClick(button);
       });
     });
@@ -469,6 +504,8 @@ button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
     console.log(" memberstackId:", memberstackId);
     console.log(" listingId:", listingId);
     console.log(" photoIndex:", photoIndex);
+
+    this.displayMessage("deleting-image");
 
     try {
       const response = await fetch(
