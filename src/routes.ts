@@ -15,7 +15,12 @@ import {
   RouteDispatcher,
   getAllPages,
   getRegistryStats,
-  initializeComponents
+  initializeComponents,
+  // FIX imports from sse-core
+  initializeFIX,
+  FIXDebug,
+  FIXRegistry,
+  registerProgrammaticAction
 } from "@sygnal/sse-core";
 import { Site } from "./site";
 
@@ -34,21 +39,18 @@ import "./pages/test/test-loader";
 import "./components/loader-overlay";
 
 // ============================================================
-// FIX TRIGGERS - Import all triggers to trigger @trigger decorator
+// FIX - STANDARD TRIGGERS & ACTIONS (auto-loaded from sse-core)
 // ============================================================
-import "./fix/triggers/trigger-click";
+// Standard triggers and actions are automatically registered when
+// @sygnal/sse-core is imported. No manual imports needed!
+// - trigger:click (TriggerClick)
+// - action:click (ActionClick)
 
 // ============================================================
-// FIX ACTIONS - Import all actions to trigger @action decorator
+// FIX - CUSTOM ACTIONS (project-specific)
 // ============================================================
-import "./fix/actions/action-click";
 import { ActionDeleteListing } from "./fix/actions/delete-listing";
 import { ActionSetStatus } from "./fix/actions/set-status";
-
-// ============================================================
-// FIX SYSTEM
-// ============================================================
-import { initializeFIX, FIXDebug, FIXRegistry, registerProgrammaticAction } from "./fix";
 
 // Register programmatic actions (non-DOM actions that don't need elements)
 registerProgrammaticAction('delete-listing', 'delete-listing', ActionDeleteListing);

@@ -4,9 +4,7 @@
  */
 
 import { LoaderOverlayComponent } from '../../components/loader-overlay';
-import { ActionBase } from '../action-base';
-import { action } from '../registry';
-import type { TriggerData } from '../trigger-base';
+import { ActionBase, action, type TriggerData } from '@sygnal/sse-core';
 import { config, api } from "../../config";
 
 /**

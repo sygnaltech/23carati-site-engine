@@ -10,11 +10,11 @@
  */
 
 import { VERSION } from "./version";
-import { routeDispatcher, initializeComponents, getRegistryStats } from "./routes";
+import { routeDispatcher, initializeComponents, getRegistryStats, initializeFIX, FIXDebug } from "./routes";
 import { initSSE } from "@sygnal/sse-core";
 import { ComponentManager } from "@sygnal/sse-core";
 import type { SiteGlobalData } from "./types";
-import { initializeFIX, FIXDebug } from "./fix";
+
 
 // Global vars
 const SITE_NAME = 'Site';
