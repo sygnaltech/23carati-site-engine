@@ -1,6 +1,6 @@
 /**
  * FIX - Functional Interactions
- * Set Status Handler
+ * Set Status Action Handler
  */
 
 import { LoaderOverlayComponent } from '../../components/loader-overlay';
@@ -10,11 +10,11 @@ import type { TriggerData } from '../trigger-base';
 import { config, api } from "../../config";
 
 /**
- * Action handler that performs a click on the tagged element
- * Attribute: action:click="event-name"
+ * Action handler that sets the status of a listing via API call
+ * Attribute: action:set-status="event-name"
  */
 @action('set-status')
-export class ActionClick extends ActionBase {
+export class ActionSetStatus extends ActionBase {
   /**
    * Initialize the action
    */

@@ -10,6 +10,8 @@ import { EventDefault } from './events/event-default';
 // Import all trigger and action handlers to register them via decorators
 import './triggers/trigger-click';
 import './actions/action-click';
+import { ActionDeleteListing } from './actions/delete-listing';
+import { ActionSetStatus } from './actions/set-status';
 
 import type { TriggerBase } from './trigger-base';
 import type { ActionBase } from './action-base';
@@ -195,7 +197,43 @@ export function initializeFIX(): void {
     }
   });
 
+  // Register programmatic actions (non-element actions)
+  registerProgrammaticAction('delete-listing', 'delete-listing', ActionDeleteListing);
+  registerProgrammaticAction('set-status', 'set-status', ActionSetStatus);
+
   console.log(`[FIX] Initialization complete. Events: ${EventRegistry.getEventNames().join(', ')}`);
+}
+
+/**
+ * Register a programmatic action that doesn't need an HTML element
+ * @param actionType The action type (e.g., "set-status")
+ * @param eventName The event name to listen to
+ * @param ActionConstructor The action class constructor
+ */
+function registerProgrammaticAction(
+  actionType: string,
+  eventName: string,
+  ActionConstructor: new (element: HTMLElement | null, attributeName: string) => ActionBase
+): void {
+  console.log(`[FIX] Registering programmatic action: ${actionType} -> event: ${eventName}`);
+
+  // Ensure event exists in registry
+  ensureEvent(eventName);
+
+  // Instantiate the action with null element
+  const actionInstance = new ActionConstructor(null, `action:${actionType}`);
+  actionInstance.init();
+
+  // Store the active action instance
+  activeActions.push({ instance: actionInstance, element: null, attribute: `action:${actionType}`, eventName });
+
+  // Register the action with the event
+  const event = EventRegistry.getEvent(eventName);
+  if (event) {
+    event.registerAction(actionInstance);
+  }
+
+  console.log(`[FIX] Registered programmatic action: action:${actionType} -> event: ${eventName}`);
 }
 
 /**
