@@ -1,18 +1,14 @@
 /**
  * FIX - Functional Interactions
  * Main initialization and processing system
+ *
+ * NOTE: Trigger and Action imports have been moved to src/routes.ts
+ * This file now contains only initialization logic and exports.
  */
 
 import { FIXRegistry } from './registry';
 import { EventRegistry } from './event-registry';
 import { EventDefault } from './events/event-default';
-import { EventSequential } from './events/event-sequential';
-
-// Import all trigger and action handlers to register them via decorators
-import './triggers/trigger-click';
-import './actions/action-click';
-import { ActionDeleteListing } from './actions/delete-listing';
-import { ActionSetStatus } from './actions/set-status';
 
 import type { TriggerBase } from './trigger-base';
 import type { ActionBase } from './action-base';
@@ -198,20 +194,17 @@ export function initializeFIX(): void {
     }
   });
 
-  // Register programmatic actions (non-element actions)
-  registerProgrammaticAction('delete-listing', 'delete-listing', ActionDeleteListing);
-  registerProgrammaticAction('set-status', 'set-status', ActionSetStatus);
-
   console.log(`[FIX] Initialization complete. Events: ${EventRegistry.getEventNames().join(', ')}`);
 }
 
 /**
  * Register a programmatic action that doesn't need an HTML element
+ * This is called from routes.ts for non-DOM actions like API calls
  * @param actionType The action type (e.g., "set-status")
  * @param eventName The event name to listen to
  * @param ActionConstructor The action class constructor
  */
-function registerProgrammaticAction(
+export function registerProgrammaticAction(
   actionType: string,
   eventName: string,
   ActionConstructor: new (element: HTMLElement | null, attributeName: string) => ActionBase
