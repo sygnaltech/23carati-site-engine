@@ -14,6 +14,7 @@ import { routeDispatcher, initializeComponents, getRegistryStats } from "./route
 import { initSSE } from "@sygnal/sse-core";
 import { ComponentManager } from "@sygnal/sse-core";
 import type { SiteGlobalData } from "./types";
+import { initializeFIX } from "./fix";
 
 // Global vars
 const SITE_NAME = 'Site';
@@ -69,6 +70,9 @@ const setup = () => {
 const exec = () => {
     // Initialize all components FIRST so they're available in componentManager
     initializeComponents();
+
+    // Initialize FIX system (Functional Interactions)
+    initializeFIX();
 
     // Execute route AFTER components are registered
     dispatcher.execRoute();
