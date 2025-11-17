@@ -6,6 +6,7 @@
 import { FIXRegistry } from './registry';
 import { EventRegistry } from './event-registry';
 import { EventDefault } from './events/event-default';
+import { EventSequential } from './events/event-sequential';
 
 // Import all trigger and action handlers to register them via decorators
 import './triggers/trigger-click';
@@ -253,4 +254,6 @@ export { EventRegistry } from './event-registry';
 export { TriggerBase } from './trigger-base';
 export { EventBase } from './event-base';
 export { ActionBase } from './action-base';
+export { EventDefault } from './events/event-default';
+export { EventSequential } from './events/event-sequential';
 export type { TriggerData } from './trigger-base';
