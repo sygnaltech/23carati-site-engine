@@ -11,6 +11,88 @@ import { EventDefault } from './events/event-default';
 import './triggers/trigger-click';
 import './actions/action-click';
 
+import type { TriggerBase } from './trigger-base';
+import type { ActionBase } from './action-base';
+
+/**
+ * Storage for active trigger and action instances
+ */
+const activeTriggers: Array<{ instance: TriggerBase; element: HTMLElement; attribute: string; eventName: string }> = [];
+const activeActions: Array<{ instance: ActionBase; element: HTMLElement | null; attribute: string; eventName: string }> = [];
+
+/**
+ * Debug helpers for inspecting the FIX system from console
+ */
+export const FIXDebug = {
+  /**
+   * List all registered trigger handler TYPES
+   */
+  triggerTypes: () => {
+    const triggers = FIXRegistry.getTriggerNames();
+    console.log('Registered Trigger Types:', triggers);
+    return triggers;
+  },
+
+  /**
+   * List all registered action handler TYPES
+   */
+  actionTypes: () => {
+    const actions = FIXRegistry.getActionNames();
+    console.log('Registered Action Types:', actions);
+    return actions;
+  },
+
+  /**
+   * List all active trigger INSTANCES on the page
+   */
+  triggers: () => {
+    console.log(`Active Triggers (${activeTriggers.length}):`, activeTriggers);
+    console.table(activeTriggers.map(t => ({
+      attribute: t.attribute,
+      eventName: t.eventName,
+      element: t.element.tagName + (t.element.id ? `#${t.element.id}` : '')
+    })));
+    return activeTriggers;
+  },
+
+  /**
+   * List all active action INSTANCES on the page
+   */
+  actions: () => {
+    console.log(`Active Actions (${activeActions.length}):`, activeActions);
+    console.table(activeActions.map(a => ({
+      attribute: a.attribute,
+      eventName: a.eventName,
+      element: a.element ? a.element.tagName + (a.element.id ? `#${a.element.id}` : '') : 'null'
+    })));
+    return activeActions;
+  },
+
+  /**
+   * List all registered events
+   */
+  events: () => {
+    const events = EventRegistry.getEventNames();
+    console.log('Registered Events:', events);
+    return events;
+  },
+
+  /**
+   * Get complete FIX stats
+   */
+  stats: () => {
+    const stats = {
+      triggerTypes: FIXRegistry.getTriggerNames(),
+      actionTypes: FIXRegistry.getActionNames(),
+      events: EventRegistry.getEventNames(),
+      activeTriggers: activeTriggers.length,
+      activeActions: activeActions.length
+    };
+    console.log('FIX Statistics:', stats);
+    return stats;
+  }
+};
+
 /**
  * Initialize the FIX system by scanning the DOM for trigger and action attributes
  */
@@ -76,6 +158,9 @@ export function initializeFIX(): void {
       const triggerInstance = new TriggerConstructor(element, eventName, attribute);
       triggerInstance.init();
 
+      // Store the active trigger instance
+      activeTriggers.push({ instance: triggerInstance, element, attribute, eventName });
+
       console.log(`[FIX] Initialized trigger: ${attribute} -> event: ${eventName}`);
     } else {
       console.warn(`[FIX] Unknown trigger type: ${triggerType}`);
@@ -94,6 +179,9 @@ export function initializeFIX(): void {
       // Instantiate and initialize the action
       const actionInstance = new ActionConstructor(element, attribute);
       actionInstance.init();
+
+      // Store the active action instance
+      activeActions.push({ instance: actionInstance, element, attribute, eventName });
 
       // Register the action with the event
       const event = EventRegistry.getEvent(eventName);

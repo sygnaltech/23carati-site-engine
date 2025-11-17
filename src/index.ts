@@ -14,7 +14,7 @@ import { routeDispatcher, initializeComponents, getRegistryStats } from "./route
 import { initSSE } from "@sygnal/sse-core";
 import { ComponentManager } from "@sygnal/sse-core";
 import type { SiteGlobalData } from "./types";
-import { initializeFIX } from "./fix";
+import { initializeFIX, FIXDebug } from "./fix";
 
 // Global vars
 const SITE_NAME = 'Site';
@@ -39,10 +39,14 @@ declare global {
 
         // SA5 library (if using Sygnal Attributes)
         sa5: unknown;
+
+        // FIX debug helpers
+        FIXDebug: typeof FIXDebug;
     }
 }
 
 window.componentManager = new ComponentManager();
+window.FIXDebug = FIXDebug;
 
 // Init SSE Engine
 initSSE();
