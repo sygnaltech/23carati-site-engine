@@ -47,10 +47,10 @@ import "./components/loader-overlay";
 // - action:click (ActionClick)
 
 // ============================================================
-// FIX - CUSTOM ACTIONS (project-specific)
+// ACTIONS - Custom project actions (FIX)
 // ============================================================
-import { ActionDeleteListing } from "./fix/actions/delete-listing";
-import { ActionSetStatus } from "./fix/actions/set-status";
+import { ActionDeleteListing } from "./actions/delete-listing";
+import { ActionSetStatus } from "./actions/set-status";
 
 // Register programmatic actions (non-DOM actions that don't need elements)
 registerProgrammaticAction('delete-listing', 'delete-listing', ActionDeleteListing);

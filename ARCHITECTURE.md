@@ -246,23 +246,7 @@ src/
 ├── components/             # Reusable components
 │   └── loader-overlay.ts
 │
-├── fix/                    # FIX system
-│   ├── index.ts           # Initialization logic
-│   ├── registry.ts        # Decorator definitions
-│   ├── event-registry.ts  # Event management
-│   │
-│   ├── triggers/          # Trigger handlers
-│   │   └── trigger-click.ts
-│   │
-│   ├── actions/           # Action handlers
-│   │   ├── action-click.ts
-│   │   ├── delete-listing.ts
-│   │   └── set-status.ts
-│   │
-│   └── events/            # Event handlers
-│       ├── event-default.ts
-│       └── event-sequential.ts
-│
+├── fix/                    # FIX custom actions (project-specific)│   └── actions/           # Only custom action handlers│       ├── delete-listing.ts│       └── set-status.ts│
 └── utils/                 # Utility functions
     ├── loader.ts
     └── switch.ts
@@ -331,3 +315,82 @@ fix/index.ts     → Pure initialization logic (no imports)
 - [FIX-DEBUG.md](FIX-DEBUG.md) - FIX debugging guide
 - [FIX-SEQUENTIAL.md](FIX-SEQUENTIAL.md) - Sequential events guide
 - [SSE-FIXES.md](SSE-FIXES.md) - Known issues and fixes
+
+## Updated File Structure (Post-Migration)
+
+After migrating FIX to sse-core, the project structure is now much simpler:
+
+```
+src/
+├── index.ts                 # Main entry point
+├── routes.ts               # MODULE REGISTRY (single source of truth)
+├── site.ts                 # Site-level configuration
+│
+├── pages/                  # Page controllers
+│   ├── home.ts
+│   ├── listings.ts
+│   ├── overview.ts
+│   ├── add-listing.ts
+│   └── test/test-loader.ts
+│
+├── components/             # Reusable components
+│   └── loader-overlay.ts
+│
+├── fix/                    # FIX CUSTOM ACTIONS ONLY
+│   └── actions/           # Project-specific actions
+│       ├── delete-listing.ts
+│       └── set-status.ts
+│
+└── utils/                 # Utility functions
+    ├── loader.ts
+    └── switch.ts
+```
+
+**What's Missing?**
+All FIX infrastructure now lives in `@sygnal/sse-core`:
+- ❌ `fix/index.ts` - Moved to sse-core
+- ❌ `fix/registry.ts` - Moved to sse-core
+- ❌ `fix/event-registry.ts` - Moved to sse-core  
+- ❌ `fix/trigger-base.ts` - Moved to sse-core
+- ❌ `fix/action-base.ts` - Moved to sse-core
+- ❌ `fix/event-base.ts` - Moved to sse-core
+- ❌ `fix/triggers/` - Moved to sse-core
+- ❌ `fix/actions/action-click.ts` - Moved to sse-core
+- ❌ `fix/events/` - Moved to sse-core
+
+See [FIX-MIGRATION.md](FIX-MIGRATION.md) for complete details.
+
+## Final Structure (After Reorganization)
+
+The cleanest structure - custom actions at top level alongside pages and components:
+
+```
+src/
+├── index.ts                 # Main entry point
+├── routes.ts               # MODULE REGISTRY (single source of truth)
+├── site.ts                 # Site-level configuration
+│
+├── pages/                  # Page controllers
+│   ├── home.ts
+│   ├── listings.ts
+│   ├── overview.ts
+│   ├── add-listing.ts
+│   └── test/test-loader.ts
+│
+├── components/             # Reusable components
+│   └── loader-overlay.ts
+│
+├── actions/                # Custom FIX actions
+│   ├── delete-listing.ts
+│   └── set-status.ts
+│
+└── utils/                  # Utility functions
+    ├── loader.ts
+    └── switch.ts
+```
+
+**Benefits:**
+- ✅ Consistent structure (pages/, components/, actions/, utils/)
+- ✅ Shorter import paths
+- ✅ Clear separation: standard (sse-core) vs custom (src/)
+- ✅ No "fix" directory confusion

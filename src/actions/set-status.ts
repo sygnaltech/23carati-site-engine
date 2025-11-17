@@ -3,9 +3,9 @@
  * Set Status Action Handler
  */
 
-import { LoaderOverlayComponent } from '../../components/loader-overlay';
+import { LoaderOverlayComponent } from '../components/loader-overlay';
 import { ActionBase, action, type TriggerData } from '@sygnal/sse-core';
-import { config, api } from "../../config";
+import { config, api } from "../config";
 
 /**
  * Action handler that sets the status of a listing via API call
