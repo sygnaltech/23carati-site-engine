@@ -1,14 +1,13 @@
 /**
- * Route Dispatcher & Module Registry
+ * Module Registry
  * Central location for ALL project modules:
  * - Pages & Components (SSE)
- * - Triggers & Actions (FIX)
+ * - Actions & Events (FIX)
+ *
+ * This file imports all modules to trigger their decorators (@page, @component, @action)
+ * and provides a single source of truth for the application's module structure.
  *
  * https://engine.sygnal.com/
- *
- * ENGINE MODE
- * ?engine.mode=dev
- * ?engine.mode=prod
  */
 
 import {

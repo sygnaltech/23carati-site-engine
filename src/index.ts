@@ -10,7 +10,7 @@
  */
 
 import { VERSION } from "./version";
-import { routeDispatcher, initializeComponents, getRegistryStats, initializeFIX, FIXDebug } from "./routes";
+import { routeDispatcher, initializeComponents, getRegistryStats, initializeFIX, FIXDebug } from "./registry";
 import { initSSE } from "@sygnal/sse-core";
 import { ComponentManager } from "@sygnal/sse-core";
 import type { SiteGlobalData } from "./types";
