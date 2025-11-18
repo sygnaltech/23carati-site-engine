@@ -18,7 +18,7 @@ export class WebflowForm {
   private formElement: HTMLFormElement;
   private successElement: HTMLElement | null;
   private errorElement: HTMLElement | null;
-  private autoMode: boolean;
+  public autoMode: boolean;
 
   constructor(element: HTMLElement) {
     // Determine if the element is the wrapper or the form itself

@@ -19,6 +19,8 @@ import {
   initializeFIX,
   FIXDebug,
   FIXRegistry,
+  registerActionType,
+  registerTriggerType,
   registerProgrammaticAction
 } from "@sygnal/sse-core";
 import { Site } from "./site";
@@ -44,16 +46,22 @@ import "./components/loader-overlay";
 // @sygnal/sse-core is imported. No manual imports needed!
 // - trigger:click (TriggerClick)
 // - action:click (ActionClick)
+// Project-specific triggers/actions imported below
 
 // ============================================================
 // ACTIONS - Custom project actions (FIX)
 // ============================================================
 import { ActionDeleteListing } from "./actions/delete-listing";
 import { ActionSetStatus } from "./actions/set-status";
+import { ActionAddListing } from "./actions/add-listing";
+import { TriggerSubmit } from "./triggers/trigger-submit";
 
 // Register programmatic actions (non-DOM actions that don't need elements)
 registerProgrammaticAction('delete-listing', 'delete-listing', ActionDeleteListing);
 registerProgrammaticAction('set-status', 'set-status', ActionSetStatus);
+registerProgrammaticAction('add-listing', 'add-listing', ActionAddListing);
+
+registerTriggerType('submit', TriggerSubmit); 
 
 /**
  * Create and configure route dispatcher
