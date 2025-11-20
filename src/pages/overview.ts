@@ -1,12 +1,13 @@
 /**
  * Page | Dashboard Overview
- * For dashboard overview page at /wholesale/dashboard/overview 
+ * For dashboard overview page at /wholesale/dashboard/overview
  * Handles image uploads and deletions for listings
  */
 
 import { IModule, page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm, FormState } from "../elements/webflow-form";
 import { config, api } from "../config";
+import { LoaderOverlayComponent } from "../components/loader-overlay";
 
 @page("/wholesale/dashboard/overview")
 export class ListingPage extends PageBase {
@@ -31,6 +32,7 @@ export class ListingPage extends PageBase {
         });
       }
     });
+
   }
 
 }

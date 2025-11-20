@@ -6,6 +6,8 @@
 import { page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm, FormState } from "../elements/webflow-form";
 import { config, api } from "../config";
+// import { displayMessage } from "../utils/loader";
+import { LoaderOverlayComponent } from "../components/loader-overlay";
 
 export enum PageMode {
   View = 'view',
@@ -23,7 +25,7 @@ export class ListingPage extends PageBase {
     const urlParams = new URLSearchParams(window.location.search);
     const modeParam = urlParams.get('mode')?.toLowerCase();
     this.mode = modeParam === 'edit' ? PageMode.Edit : PageMode.View;
-
+    console.log('[Listings] Mode detection:', { queryParam: modeParam, resolvedMode: this.mode });
     console.log('Page mode:', this.mode);
   }
 
@@ -43,9 +45,26 @@ export class ListingPage extends PageBase {
       return index;
     }
 
+    
+
     console.log("No collection item found for element:", element);
     return -1; 
   } 
+
+  protected displayMessage(messageKey: string): void {
+    // Get the loader-overlay component from the registry
+    const [loaderOverlay] = window.componentManager?.getComponentsByType<LoaderOverlayComponent>('loader-overlay') ?? [];
+
+    if (!loaderOverlay) {
+      console.warn('Loader-overlay component not found in registry');
+      return;
+    }
+
+    console.log('Loader-overlay component found');
+
+    // Show the loader overlay with the specified message
+    loaderOverlay.show(messageKey);
+  }
 
   protected async onLoad(): Promise<void> {
     console.log("Listings page exec");
@@ -71,9 +90,97 @@ export class ListingPage extends PageBase {
       }
     });
 
+    // Initialize popup
+    // Get the loader-overlay component from the registry
+    const [loaderOverlay] = window.componentManager?.getComponentsByType<LoaderOverlayComponent>('loader-overlay') ?? [];
+
+    if (!loaderOverlay) {
+      console.warn('Loader-overlay component not found in registry');
+      return;
+    }
+
+    console.log('Loader-overlay component found');
+    
+
+
+    // Initialize field values from sse-field-value on inputs, options, and textareas
+    try {
+      const fieldNodes = document.querySelectorAll<HTMLElement>(
+        'input[sse-field-value], textarea[sse-field-value], select[sse-field-value], option[sse-field-value]'
+      );
+      console.log(`[Listings] Initializing ${fieldNodes.length} field(s) from sse-field-value`);
+
+      const toBool = (v: string): boolean => {
+        const s = v.trim().toLowerCase();
+        return s === 'true' || s === '1' || s === 'yes' || s === 'on';
+      };
+
+      fieldNodes.forEach((el) => {
+        const valAttr = el.getAttribute('sse-field-value') ?? '';
+        const tag = el.tagName;
+
+        if (tag === 'INPUT') {
+          const input = el as HTMLInputElement;
+          const type = (input.type || '').toLowerCase();
+          if (type === 'checkbox') {
+            input.checked = toBool(valAttr);
+            // Do not override existing value; checkbox value often meaningful
+            console.log('[Listings] Set checkbox', { name: input.name, checked: input.checked });
+          } else if (type === 'radio') {
+            // Prefer matching by value; otherwise treat truthy as checked
+            if (input.value === valAttr) {
+              input.checked = true;
+            } else if (toBool(valAttr)) {
+              input.checked = true;
+            }
+            console.log('[Listings] Set radio', { name: input.name, value: input.value, checked: input.checked });
+          } else {
+            input.value = valAttr;
+            console.log('[Listings] Set input', { name: input.name, type, value: input.value });
+          }
+        } else if (tag === 'TEXTAREA') {
+          const ta = el as HTMLTextAreaElement;
+          ta.value = valAttr;
+          console.log('[Listings] Set textarea', { name: ta.name, value: ta.value });
+        } else if (tag === 'SELECT') {
+          const sel = el as HTMLSelectElement;
+          const raw = el.getAttribute('sse-field-value') ?? '';
+          if (sel.multiple) {
+            const vals = raw
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
+            Array.from(sel.options).forEach((opt) => {
+              const byValue = vals.indexOf(opt.value) !== -1;
+              const byText = vals.indexOf(opt.text) !== -1;
+              opt.selected = byValue || byText;
+            });
+          } else {
+            sel.value = raw;
+            if (sel.value !== raw) {
+              const byText = Array.from(sel.options).find((o) => o.text === raw);
+              if (byText) sel.value = byText.value;
+            }
+          }
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          console.log('[Listings] Set select', { name: sel.name, value: sel.value, multiple: sel.multiple });
+        } else if (tag === 'OPTION') {
+          const opt = el as HTMLOptionElement;
+          const shouldSelect = toBool(valAttr) || opt.value === valAttr;
+          if (shouldSelect) opt.selected = true;
+          // Optionally set value if empty
+          if (!opt.value) opt.value = valAttr;
+          console.log('[Listings] Set option', { value: opt.value, selected: opt.selected });
+        }
+      });
+    } catch (e) {
+      console.error('[Listings] Error initializing sse-field-value fields:', e);
+    }
+
     // Instantiate and handle form submission for #set-image
     const setImageForm = document.querySelector("#set-image");
     if (setImageForm) {
+      console.log('[Listings] Found #set-image form. Mounting handler...');
       const webflowForm = new WebflowForm(setImageForm as HTMLElement);
       const form = webflowForm.getForm();
 
@@ -94,14 +201,21 @@ export class ListingPage extends PageBase {
       console.log(" memberstackId:", memberstackIdInput.value);
       console.log(" listingId:", listingIdInput.value);
 
+      // Resolve endpoint and log
+      const setImageEndpoint = api.url('/forms/upload-image');
+      form.action = setImageEndpoint;
+      console.log('[Listings] Set image endpoint:', setImageEndpoint);
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        this.displayMessage("uploading-file");
+        
         console.log("Set image form submitted");
 
         const formData = new FormData(form);
 
         try {
-          const response = await fetch(form.action, {
+          const response = await fetch(setImageEndpoint, {
             method: "POST",
             body: formData,
           });
@@ -133,10 +247,158 @@ export class ListingPage extends PageBase {
         }
       });
     }
+    if (!setImageForm) {
+      console.log('[Listings] #set-image form not found.');
+    }
+
+    // Instantiate and handle form submission for #set-certificate
+    const setCertificateForm = document.querySelector("#set-certificate");
+    if (setCertificateForm) {
+      console.log('[Listings] Found #set-certificate form. Mounting handler...');
+      const webflowForm = new WebflowForm(setCertificateForm as HTMLElement);
+      const form = webflowForm.getForm();
+
+      // Add hidden inputs for memberstackId and listingId
+      const memberstackIdInput = document.createElement("input");
+      memberstackIdInput.type = "hidden";
+      memberstackIdInput.name = "memberstackId";
+      memberstackIdInput.value = config.memberstackId;
+      form.appendChild(memberstackIdInput);
+
+      const listingIdInput = document.createElement("input");
+      listingIdInput.type = "hidden";
+      listingIdInput.name = "listingId";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
+      form.appendChild(listingIdInput);
+
+      console.log("Added hidden inputs to certificate form:");
+      console.log(" memberstackId:", memberstackIdInput.value);
+      console.log(" listingId:", listingIdInput.value);
+
+      // Resolve endpoint and log for visibility
+      const certificateEndpoint = api.url('/forms/upload-file');
+      form.action = certificateEndpoint;
+      console.log('[Listings] Certificate upload endpoint:', certificateEndpoint);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        this.displayMessage("uploading-file");
+        console.log("Set certificate form submitted");
+
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch(certificateEndpoint, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            console.log("Certificate upload successful");
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Success);
+              // Refresh page after a short delay to show success message
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              // In manual mode, refresh immediately without delay
+              window.location.reload();
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("Certificate upload failed:", response.status, errorText);
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Error);
+            }
+          }
+        } catch (error) {
+          console.error("Error uploading certificate:", error);
+          if (webflowForm.isAutoMode()) {
+            webflowForm.setState(FormState.Error);
+          }
+        }
+      });
+    }
+    if (!setCertificateForm) {
+      console.log('[Listings] #set-certificate form not found.');
+    }
+
+    // Instantiate and handle form submission for #update-data
+    const updateDataForm = document.querySelector("#update-data");
+    if (updateDataForm) {
+      console.log('[Listings] Found #update-data form. Mounting handler...');
+      const webflowForm = new WebflowForm(updateDataForm as HTMLElement);
+      const form = webflowForm.getForm();
+
+      // Add hidden inputs for memberstackId and listingId
+      const memberstackIdInput = document.createElement("input");
+      memberstackIdInput.type = "hidden";
+      memberstackIdInput.name = "memberstackId";
+      memberstackIdInput.value = config.memberstackId;
+      form.appendChild(memberstackIdInput);
+
+      const listingIdInput = document.createElement("input");
+      listingIdInput.type = "hidden";
+      listingIdInput.name = "listingId";
+      listingIdInput.value = this.pageInfo.itemSlug || "";
+      form.appendChild(listingIdInput);
+
+      console.log("Added hidden inputs to update-data form:");
+      console.log(" memberstackId:", memberstackIdInput.value);
+      console.log(" listingId:", listingIdInput.value);
+
+      // Resolve endpoint and log
+      const updateEndpoint = api.url('/forms/update-listing');
+      console.log('[Listings] Update listing endpoint:', updateEndpoint);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        this.displayMessage("");
+        console.log("Update data form submitted");
+
+        const formData = new FormData(form);
+
+        try {
+          const response = await fetch(updateEndpoint, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            console.log("Update listing successful");
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Success);
+              // Refresh page after a short delay to show success message
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            } else {
+              // In manual mode, refresh immediately without delay
+              window.location.reload();
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("Update listing failed:", response.status, errorText);
+            if (webflowForm.isAutoMode()) {
+              webflowForm.setState(FormState.Error);
+            }
+          }
+        } catch (error) {
+          console.error("Error updating listing:", error);
+          if (webflowForm.isAutoMode()) {
+            webflowForm.setState(FormState.Error);
+          }
+        }
+      });
+    } else {
+      console.log('[Listings] #update-data form not found.');
+    }
 
     // Instantiate and handle form submission for #add-multi-image
     const addMultiImageForm = document.querySelector("#add-multi-image");
     if (addMultiImageForm) {
+      console.log('[Listings] Found #add-multi-image form. Mounting handler...');
       const webflowForm = new WebflowForm(addMultiImageForm as HTMLElement);
       const form = webflowForm.getForm();
 
@@ -157,14 +419,20 @@ export class ListingPage extends PageBase {
       console.log(" memberstackId:", memberstackIdInput.value);
       console.log(" listingId:", listingIdInput.value);
 
+      // Resolve endpoint and log
+      const addMultiImageEndpoint = api.url('/forms/upload-multi-image');
+      form.action = addMultiImageEndpoint;
+      console.log('[Listings] Add multi-image endpoint:', addMultiImageEndpoint);
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        this.displayMessage("uploading-file");
         console.log("Add multi-image form submitted");
 
         const formData = new FormData(form);
 
         try {
-          const response = await fetch(form.action, {
+          const response = await fetch(addMultiImageEndpoint, {
             method: "POST",
             body: formData,
           });
@@ -195,6 +463,9 @@ export class ListingPage extends PageBase {
           }
         }
       });
+    }
+    if (!addMultiImageForm) {
+      console.log('[Listings] #add-multi-image form not found.');
     }
 
     // Find all buttons with class w-button
@@ -216,7 +487,7 @@ button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
     // Handle delete button clicks
     buttons.forEach((button) => {
       button.addEventListener("click", (e) => {
-        e.preventDefault();
+        e.preventDefault();        
         this.handleDeleteButtonClick(button);
       });
     });
@@ -233,6 +504,8 @@ button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
     console.log(" memberstackId:", memberstackId);
     console.log(" listingId:", listingId);
     console.log(" photoIndex:", photoIndex);
+
+    this.displayMessage("deleting-image");
 
     try {
       const response = await fetch(

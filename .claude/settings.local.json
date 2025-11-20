@@ -4,7 +4,8 @@
       "Bash(cat:*)",
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
-      "Read(//d/Projects/Engines/sse-core/src/**)"
+      "Read(//d/Projects/Engines/sse-core/src/**)",
+      "Bash(npm install)"
     ],
     "deny": [],
     "ask": []
