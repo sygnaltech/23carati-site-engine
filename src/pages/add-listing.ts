@@ -24,7 +24,9 @@ export class AddListingPage extends PageBase {
   protected async onLoad(): Promise<void> {
     console.log("Add Listing page exec");
 
-    console.log("Listings page exec complete");
+
+    
+    console.log("Listings page exec complete"); 
   }
 
 }

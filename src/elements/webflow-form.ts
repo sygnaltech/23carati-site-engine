@@ -153,4 +153,98 @@ export class WebflowForm {
     this.formElement.reset();
     this.setState(FormState.Default);
   }
+
+  /**
+   * Add a single hidden field to the form
+   * @param name The name attribute for the hidden input
+   * @param value The value for the hidden input
+   * @returns The created input element
+   */
+  addHiddenField(name: string, value: string): HTMLInputElement {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    this.formElement.appendChild(input);
+    return input;
+  }
+
+  /**
+   * Add multiple hidden fields to the form
+   * @param fields An object with key-value pairs for hidden fields
+   * @returns this (for chaining)
+   */
+  addHiddenFields(fields: Record<string, string>): this {
+    for (const name in fields) {
+      if (fields.hasOwnProperty(name)) {
+        this.addHiddenField(name, fields[name]);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Set the form action endpoint
+   * @param endpoint The URL to submit the form to
+   * @returns this (for chaining)
+   */
+  setEndpoint(endpoint: string): this {
+    this.formElement.action = endpoint;
+    return this;
+  }
+
+  /**
+   * Set up form submission handler with automatic success/error handling
+   * @param endpoint The URL to submit the form to
+   * @param options Configuration options for the submission
+   * @returns this (for chaining)
+   */
+  onSubmit(
+    endpoint: string,
+    options?: {
+      preSubmit?: () => void;
+      onSuccess?: (response: Response) => void | Promise<void>;
+      onError?: (error: string) => void;
+      method?: string;
+    }
+  ): this {
+    this.formElement.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Call pre-submit hook
+      options?.preSubmit?.();
+
+      const formData = new FormData(this.formElement);
+
+      try {
+        const response = await fetch(endpoint, {
+          method: options?.method || "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          console.log("Form submission successful");
+          if (this.autoMode) {
+            this.setState(FormState.Success);
+          }
+          await options?.onSuccess?.(response);
+        } else {
+          const errorText = await response.text();
+          console.error("Form submission failed:", response.status, errorText);
+          if (this.autoMode) {
+            this.setState(FormState.Error);
+          }
+          options?.onError?.(errorText);
+        }
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        if (this.autoMode) {
+          this.setState(FormState.Error);
+        }
+        options?.onError?.(error instanceof Error ? error.message : String(error));
+      }
+    });
+
+    return this;
+  }
 }
