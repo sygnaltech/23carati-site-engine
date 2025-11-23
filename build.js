@@ -4,6 +4,7 @@ const sass = require('sass');
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
+const packageJson = require('./package.json');
 
 // Check if watch mode is enabled
 const isWatch = process.argv.includes('--watch');
@@ -163,6 +164,10 @@ async function buildTypeScript() {
       target: 'es6',
       minify: isProduction,
       define: define,
+      banner: {
+        js: `/* Version: ${packageJson.version} | Build: ${new Date().toISOString()} */`,
+//        js: `/* Version: ${packageJson.version} | Build: ${new Date().toISOString()} | Environment: ${env} */`,
+      },
       watch: isWatch ? {
         onRebuild(error, result) {
           if (error) {
