@@ -1,3 +1,5 @@
+import { WebflowElementBase } from "./webflow-element-base";
+
 /**
  * WebflowForm - General purpose class for managing Webflow form states
  *
@@ -5,6 +7,10 @@
  * - Default: Only the form is visible
  * - Success: Only the success message (w-form-done) is visible
  * - Error: Both the form and error message (w-form-fail) are visible
+ *
+ * Supports initialization from either:
+ * - The .w-form wrapper div (finds the form within)
+ * - The <form> element directly (finds the wrapper parent)
  */
 
 export enum FormState {
@@ -13,7 +19,7 @@ export enum FormState {
   Error = "error",
 }
 
-export class WebflowForm {
+export class WebflowForm extends WebflowElementBase {
   private wrapperElement: HTMLElement;
   private formElement: HTMLFormElement;
   private successElement: HTMLElement | null;
@@ -21,6 +27,8 @@ export class WebflowForm {
   public autoMode: boolean;
 
   constructor(element: HTMLElement) {
+    super(element);
+
     // Determine if the element is the wrapper or the form itself
     if (element.classList.contains("w-form")) {
       this.wrapperElement = element;
@@ -52,6 +60,36 @@ export class WebflowForm {
 
     // Initialize to default state
     this.setState(FormState.Default);
+  }
+
+  /**
+   * Validates that the element is a form or w-form wrapper
+   */
+  protected validate(element: HTMLElement): void {
+    const isWrapper = element.classList.contains("w-form");
+    const isForm = element.tagName === "FORM";
+
+    if (!isWrapper && !isForm) {
+      throw new Error(
+        `Element must be either a .w-form wrapper or a <form> element. Received: ${element.tagName} with classes: ${element.className}`
+      );
+    }
+
+    // Additional validation: if it's a wrapper, must contain a form
+    if (isWrapper) {
+      const form = element.querySelector("form");
+      if (!form) {
+        throw new Error("w-form wrapper must contain a <form> element");
+      }
+    }
+
+    // Additional validation: if it's a form, must be within a wrapper
+    if (isForm) {
+      const wrapper = element.closest(".w-form");
+      if (!wrapper) {
+        throw new Error("<form> element must be within a .w-form wrapper");
+      }
+    }
   }
 
   /**

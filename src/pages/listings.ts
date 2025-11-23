@@ -178,13 +178,13 @@ export class ListingPage extends PageBase {
     }
 
     // Instantiate and handle form submission for #set-image
-    const setImageForm = document.querySelector("#set-image");
+    const setImageForm = WebflowForm.tryCreateFromId("set-image");
     if (setImageForm) {
       console.log('[Listings] Found #set-image form. Mounting handler...');
       const setImageEndpoint = api.url('/forms/upload-image');
       console.log('[Listings] Set image endpoint:', setImageEndpoint);
 
-      new WebflowForm(setImageForm as HTMLElement)
+      setImageForm
         .addHiddenFields({
           memberstackId: config.memberstackId,
           listingId: this.pageInfo.itemSlug || ""
@@ -196,18 +196,16 @@ export class ListingPage extends PageBase {
             setTimeout(() => window.location.reload(), 1500);
           }
         });
-    } else {
-      console.log('[Listings] #set-image form not found.');
     }
 
     // Instantiate and handle form submission for #set-certificate
-    const setCertificateForm = document.querySelector("#set-certificate");
+    const setCertificateForm = WebflowForm.tryCreateFromId("set-certificate");
     if (setCertificateForm) {
       console.log('[Listings] Found #set-certificate form. Mounting handler...');
       const certificateEndpoint = api.url('/forms/upload-file');
       console.log('[Listings] Certificate upload endpoint:', certificateEndpoint);
 
-      new WebflowForm(setCertificateForm as HTMLElement)
+      setCertificateForm
         .addHiddenFields({
           memberstackId: config.memberstackId,
           listingId: this.pageInfo.itemSlug || ""
@@ -219,18 +217,16 @@ export class ListingPage extends PageBase {
             setTimeout(() => window.location.reload(), 1500);
           }
         });
-    } else {
-      console.log('[Listings] #set-certificate form not found.');
     }
 
     // Instantiate and handle form submission for #update-data
-    const updateDataForm = document.querySelector("#update-data");
+    const updateDataForm = WebflowForm.tryCreateFromId("update-data");
     if (updateDataForm) {
       console.log('[Listings] Found #update-data form. Mounting handler...');
       const updateEndpoint = api.url('/forms/update-listing');
       console.log('[Listings] Update listing endpoint:', updateEndpoint);
 
-      new WebflowForm(updateDataForm as HTMLElement)
+      updateDataForm
         .addHiddenFields({
           memberstackId: config.memberstackId,
           listingId: this.pageInfo.itemSlug || ""
@@ -241,18 +237,16 @@ export class ListingPage extends PageBase {
             setTimeout(() => window.location.reload(), 1500);
           }
         });
-    } else {
-      console.log('[Listings] #update-data form not found.');
     }
 
     // Instantiate and handle form submission for #add-multi-image
-    const addMultiImageForm = document.querySelector("#add-multi-image");
+    const addMultiImageForm = WebflowForm.tryCreateFromId("add-multi-image");
     if (addMultiImageForm) {
       console.log('[Listings] Found #add-multi-image form. Mounting handler...');
       const addMultiImageEndpoint = api.url('/forms/upload-multi-image');
       console.log('[Listings] Add multi-image endpoint:', addMultiImageEndpoint);
 
-      new WebflowForm(addMultiImageForm as HTMLElement)
+      addMultiImageForm
         .addHiddenFields({
           memberstackId: config.memberstackId,
           listingId: this.pageInfo.itemSlug || ""
@@ -264,8 +258,6 @@ export class ListingPage extends PageBase {
             setTimeout(() => window.location.reload(), 1500);
           }
         });
-    } else {
-      console.log('[Listings] #add-multi-image form not found.');
     }
 
     // Find all buttons with class w-button
