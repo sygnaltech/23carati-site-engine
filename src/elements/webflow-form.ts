@@ -1,4 +1,5 @@
 import { WebflowElementBase } from "./webflow-element-base";
+import { apiRequest } from "../utils/api-client";
 
 /**
  * WebflowForm - General purpose class for managing Webflow form states
@@ -244,6 +245,8 @@ export class WebflowForm extends WebflowElementBase {
       onSuccess?: (response: Response) => void | Promise<void>;
       onError?: (error: string) => void;
       method?: string;
+      useAuth?: boolean;
+      bearerToken?: string;
     }
   ): this {
     this.formElement.addEventListener("submit", async (e) => {
@@ -255,9 +258,11 @@ export class WebflowForm extends WebflowElementBase {
       const formData = new FormData(this.formElement);
 
       try {
-        const response = await fetch(endpoint, {
+        const response = await apiRequest(endpoint, {
           method: options?.method || "POST",
           body: formData,
+          useAuth: options?.useAuth,
+          bearerToken: options?.bearerToken,
         });
 
         if (response.ok) {

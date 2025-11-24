@@ -5,9 +5,10 @@
 
 import { page, PageBase } from "@sygnal/sse-core";
 import { WebflowForm } from "../elements/webflow-form";
-import { config, api } from "../config";
+import { api } from "../config";
 // import { displayMessage } from "../utils/loader";
 import { LoaderOverlayComponent } from "../components/loader-overlay";
+import { getCurrentMemberId } from "../utils/memberstack";
 
 export enum PageMode {
   View = 'view',
@@ -100,8 +101,23 @@ export class ListingPage extends PageBase {
     }
 
     console.log('Loader-overlay component found');
-    
 
+    // Get the current member ID from Memberstack SDK
+    let memberstackId: string;
+    try {
+      const id = await getCurrentMemberId();
+      if (!id) {
+        console.error('[Listings] User is not logged in. Forms will not be initialized.');
+        alert('You must be logged in to edit listings.');
+        return;
+      }
+      memberstackId = id;
+      console.log('[Listings] Retrieved member ID:', memberstackId);
+    } catch (error) {
+      console.error('[Listings] Failed to retrieve member ID:', error);
+      alert('Failed to verify your login. Please refresh the page and try again.');
+      return;
+    }
 
     // Initialize field values from sse-field-value on inputs, options, and textareas
     try {
@@ -186,11 +202,12 @@ export class ListingPage extends PageBase {
 
       setImageForm
         .addHiddenFields({
-          memberstackId: config.memberstackId,
+          memberstackId: memberstackId,
           listingId: this.pageInfo.itemSlug || ""
         })
         .setEndpoint(setImageEndpoint)
         .onSubmit(setImageEndpoint, {
+          useAuth: true,
           preSubmit: () => this.displayMessage("uploading-file"),
           onSuccess: () => {
             setTimeout(() => window.location.reload(), 1500);
@@ -207,11 +224,12 @@ export class ListingPage extends PageBase {
 
       setCertificateForm
         .addHiddenFields({
-          memberstackId: config.memberstackId,
+          memberstackId: memberstackId,
           listingId: this.pageInfo.itemSlug || ""
         })
         .setEndpoint(certificateEndpoint)
         .onSubmit(certificateEndpoint, {
+          useAuth: true,
           preSubmit: () => this.displayMessage("uploading-file"),
           onSuccess: () => {
             setTimeout(() => window.location.reload(), 1500);
@@ -228,10 +246,11 @@ export class ListingPage extends PageBase {
 
       updateDataForm
         .addHiddenFields({
-          memberstackId: config.memberstackId,
+          memberstackId: memberstackId,
           listingId: this.pageInfo.itemSlug || ""
         })
         .onSubmit(updateEndpoint, {
+          useAuth: true,
           preSubmit: () => this.displayMessage(""),
           onSuccess: () => {
             setTimeout(() => window.location.reload(), 1500);
@@ -248,11 +267,12 @@ export class ListingPage extends PageBase {
 
       addMultiImageForm
         .addHiddenFields({
-          memberstackId: config.memberstackId,
+          memberstackId: memberstackId,
           listingId: this.pageInfo.itemSlug || ""
         })
         .setEndpoint(addMultiImageEndpoint)
         .onSubmit(addMultiImageEndpoint, {
+          useAuth: true,
           preSubmit: () => this.displayMessage("uploading-file"),
           onSuccess: () => {
             setTimeout(() => window.location.reload(), 1500);
@@ -288,7 +308,21 @@ button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
   }
 
   async handleDeleteButtonClick(button: Element): Promise<void> {
-    const memberstackId = config.memberstackId;
+    // Get the current member ID at click time
+    let memberstackId: string;
+    try {
+      const id = await getCurrentMemberId();
+      if (!id) {
+        alert('You must be logged in to delete images.');
+        return;
+      }
+      memberstackId = id;
+    } catch (error) {
+      console.error('[Listings] Failed to retrieve member ID for delete:', error);
+      alert('Failed to verify your login. Please refresh the page and try again.');
+      return;
+    }
+
     const listingId = button.getAttribute("item-slug") || "";
     const photoIndex = button.getAttribute("item-index") || "";
 

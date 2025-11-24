@@ -10,6 +10,7 @@ export type FormValue = string | string[];
 // Note: TriggerData index signature is string -> string; we widen via assertion when returning.
 export type SubmitTriggerData = TriggerData & {
   fields: Record<string, FormValue>;
+  headers?: Record<string, string>;
 };
 
 /**
@@ -37,13 +38,15 @@ export class TriggerSubmit extends TriggerBase {
   }
 
   /**
-   * Extend base data with serialized form fields.
+   * Extend base data with serialized form fields and headers.
    */
   protected composeTriggerData(): SubmitTriggerData {
     const base = super.composeTriggerData() as Record<string, string>;
     const fields: Record<string, FormValue> = {};
+    const headers: Record<string, string> = {};
 
     if (this.element instanceof HTMLFormElement) {
+      // Collect form fields
       const formData = new FormData(this.element);
       for (const [key, value] of formData.entries()) {
         // Skip files for this trigger
@@ -62,11 +65,23 @@ export class TriggerSubmit extends TriggerBase {
           fields[key] = [existing, value];
         }
       }
+
+      // Collect headers from trigger:submit:header:* attributes
+      const attrs = this.element.attributes;
+      for (let i = 0; i < attrs.length; i++) {
+        const attr = attrs[i];
+        if (attr.name.startsWith('trigger:submit:header:')) {
+          const headerName = attr.name.replace('trigger:submit:header:', '');
+          headers[headerName] = attr.value;
+          console.log(`[FIX Trigger:Submit] Collected header: ${headerName}`);
+        }
+      }
     }
 
     return {
       ...base,
-      fields
+      fields,
+      headers: Object.keys(headers).length > 0 ? headers : undefined
     } as unknown as SubmitTriggerData;
   }
 }

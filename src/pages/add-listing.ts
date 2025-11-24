@@ -4,8 +4,8 @@
  */
 
 import { page, PageBase } from "@sygnal/sse-core";
-import { WebflowForm, FormState } from "../elements/webflow-form";
-import { config, api } from "../config";
+import { config } from "../config";
+import { getCurrentMemberToken } from "../utils/memberstack";
 
 export enum PageMode {
   View = 'view',
@@ -24,9 +24,27 @@ export class AddListingPage extends PageBase {
   protected async onLoad(): Promise<void> {
     console.log("Add Listing page exec");
 
+    // Find all forms with trigger:submit attribute
+    const forms = document.querySelectorAll('[trigger\\:submit]');
+    console.log(`[AddListing] Found ${forms.length} form(s) with trigger:submit`);
 
-    
-    console.log("Listings page exec complete"); 
+    // Get JWT token from Memberstack
+    const token = await getCurrentMemberToken();
+
+    if (token && config.apiRequiresAuth) {
+      console.log('[AddListing] Injecting authentication header into forms');
+      forms.forEach(form => {
+        // Add header attribute: trigger:submit:header:authorization
+        form.setAttribute('trigger:submit:header:authorization', `Bearer ${token}`);
+        console.log('[AddListing] Added auth header to form:', form.getAttribute('trigger:submit'));
+      });
+    } else if (!token && config.apiRequiresAuth) {
+      console.warn('[AddListing] API requires auth but no token available');
+    } else {
+      console.log('[AddListing] API does not require auth, skipping header injection');
+    }
+
+    console.log("Add Listing page exec complete");
   }
 
 }

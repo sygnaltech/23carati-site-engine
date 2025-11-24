@@ -11,6 +11,7 @@ declare const process: {
     NODE_ENV: string;
     API_BASE_URL: string;
     MEMBERSTACK_ID: string;
+    API_REQUIRES_AUTH: string;
   };
 };
 
@@ -42,6 +43,12 @@ export const config = {
    * Memberstack ID for the current environment
    */
   memberstackId: process.env.MEMBERSTACK_ID,
+
+  /**
+   * Whether API endpoints require authentication
+   * Set to "false" in testing environments to bypass auth
+   */
+  apiRequiresAuth: process.env.API_REQUIRES_AUTH !== 'false',
 };
 
 /**
