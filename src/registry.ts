@@ -54,12 +54,14 @@ import "./components/loader-overlay";
 import { ActionDeleteListing } from "./actions/delete-listing";
 import { ActionSetStatus } from "./actions/set-status";
 import { ActionAddListing } from "./actions/add-listing";
+import { ActionDeleteMultiImage } from "./actions/delete-multi-image";
 import { TriggerSubmit } from "./triggers/trigger-submit";
 
 // Register programmatic actions (non-DOM actions that don't need elements)
 registerProgrammaticAction('delete-listing', 'delete-listing', ActionDeleteListing);
 registerProgrammaticAction('set-status', 'set-status', ActionSetStatus);
 registerProgrammaticAction('add-listing', 'add-listing', ActionAddListing);
+registerProgrammaticAction('delete-multi-image', 'delete-multi-image', ActionDeleteMultiImage);
 
 registerTriggerType('submit', TriggerSubmit); 
 

@@ -280,87 +280,24 @@ export class ListingPage extends PageBase {
         });
     }
 
-    // Find all buttons with class w-button
+    // Find all delete buttons and set up FIX trigger attributes
     const buttons = document.querySelectorAll("[sse-action='delete-multi-image']");
-    console.log("Found buttons:", buttons.length);
+    console.log("[Listings] Found delete buttons:", buttons.length);
 
     buttons.forEach((button) => {
       const itemIndex = this.getCollectionListItemIndex(button);
+      const listingId = this.pageInfo.itemSlug || "";
 
-button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
-
-      if (itemIndex !== -1) {
-        // Set the itemIndex attribute on the button
-        button.setAttribute("item-index", itemIndex.toString());
-        console.log("Set itemIndex attribute:", itemIndex, "on button:", button);
+      if (itemIndex !== -1 && listingId) {
+        // Set up FIX trigger attributes
+        button.setAttribute("trigger:click", "delete-multi-image");
+        button.setAttribute("trigger:click:data:listing-id", listingId);
+        button.setAttribute("trigger:click:data:photo-index", itemIndex.toString());
+        console.log("[Listings] Configured delete button:", { listingId, photoIndex: itemIndex });
       }
-    });
-
-    // Handle delete button clicks
-    buttons.forEach((button) => {
-      button.addEventListener("click", (e) => {
-        e.preventDefault();        
-        this.handleDeleteButtonClick(button);
-      });
     });
 
     console.log("Listings page exec complete");
-  }
-
-  async handleDeleteButtonClick(button: Element): Promise<void> {
-    // Get the current member ID at click time
-    let memberstackId: string;
-    try {
-      const id = await getCurrentMemberId();
-      if (!id) {
-        alert('You must be logged in to delete images.');
-        return;
-      }
-      memberstackId = id;
-    } catch (error) {
-      console.error('[Listings] Failed to retrieve member ID for delete:', error);
-      alert('Failed to verify your login. Please refresh the page and try again.');
-      return;
-    }
-
-    const listingId = button.getAttribute("item-slug") || "";
-    const photoIndex = button.getAttribute("item-index") || "";
-
-    console.log("Delete button clicked:");
-    console.log(" memberstackId:", memberstackId);
-    console.log(" listingId:", listingId);
-    console.log(" photoIndex:", photoIndex);
-
-    this.displayMessage("deleting-image");
-
-    try {
-      const response = await fetch(
-        api.endpoints.deleteMultiImage,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            memberstackId: memberstackId,
-            listingId: listingId,
-            photoIndex: photoIndex,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        console.log("Delete successful, refreshing page");
-        window.location.reload();
-      } else {
-        const errorText = await response.text();
-        console.error("Delete failed:", response.status, errorText);
-        alert(`Failed to delete image: ${response.status} ${errorText}`);
-      }
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      alert(`Error deleting image: ${error}`);
-    }
   }
 }
 
