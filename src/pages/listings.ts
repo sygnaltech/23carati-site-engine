@@ -4,10 +4,11 @@
  */
 
 import { page, PageBase } from "@sygnal/sse-core";
-import { WebflowForm, FormState } from "../elements/webflow-form";
-import { config, api } from "../config";
+import { WebflowForm } from "../elements/webflow-form";
+import { api } from "../config";
 // import { displayMessage } from "../utils/loader";
 import { LoaderOverlayComponent } from "../components/loader-overlay";
+import { getCurrentMemberId } from "../utils/memberstack";
 
 export enum PageMode {
   View = 'view',
@@ -100,8 +101,23 @@ export class ListingPage extends PageBase {
     }
 
     console.log('Loader-overlay component found');
-    
 
+    // Get the current member ID from Memberstack SDK
+    let memberstackId: string;
+    try {
+      const id = await getCurrentMemberId();
+      if (!id) {
+        console.error('[Listings] User is not logged in. Forms will not be initialized.');
+        alert('You must be logged in to edit listings.');
+        return;
+      }
+      memberstackId = id;
+      console.log('[Listings] Retrieved member ID:', memberstackId);
+    } catch (error) {
+      console.error('[Listings] Failed to retrieve member ID:', error);
+      alert('Failed to verify your login. Please refresh the page and try again.');
+      return;
+    }
 
     // Initialize field values from sse-field-value on inputs, options, and textareas
     try {
@@ -178,363 +194,110 @@ export class ListingPage extends PageBase {
     }
 
     // Instantiate and handle form submission for #set-image
-    const setImageForm = document.querySelector("#set-image");
+    const setImageForm = WebflowForm.tryCreateFromId("set-image");
     if (setImageForm) {
       console.log('[Listings] Found #set-image form. Mounting handler...');
-      const webflowForm = new WebflowForm(setImageForm as HTMLElement);
-      const form = webflowForm.getForm();
-
-      // Add hidden inputs for memberstackId and listingId
-      const memberstackIdInput = document.createElement("input");
-      memberstackIdInput.type = "hidden";
-      memberstackIdInput.name = "memberstackId";
-      memberstackIdInput.value = config.memberstackId;
-      form.appendChild(memberstackIdInput);
-
-      const listingIdInput = document.createElement("input");
-      listingIdInput.type = "hidden";
-      listingIdInput.name = "listingId";
-      listingIdInput.value = this.pageInfo.itemSlug || "";
-      form.appendChild(listingIdInput);
-
-      console.log("Added hidden inputs to form:");
-      console.log(" memberstackId:", memberstackIdInput.value);
-      console.log(" listingId:", listingIdInput.value);
-
-      // Resolve endpoint and log
       const setImageEndpoint = api.url('/forms/upload-image');
-      form.action = setImageEndpoint;
       console.log('[Listings] Set image endpoint:', setImageEndpoint);
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        this.displayMessage("uploading-file");
-        
-        console.log("Set image form submitted");
-
-        const formData = new FormData(form);
-
-        try {
-          const response = await fetch(setImageEndpoint, {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            console.log("Form submission successful");
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Success);
-              // Refresh page after a short delay to show success message
-              setTimeout(() => {
-                window.location.reload();
-              }, 1500);
-            } else {
-              // In manual mode, refresh immediately without delay
-              window.location.reload();
-            }
-          } else {
-            const errorText = await response.text();
-            console.error("Form submission failed:", response.status, errorText);
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Error);
-            }
+      setImageForm
+        .addHiddenFields({
+          memberstackId: memberstackId,
+          listingId: this.pageInfo.itemSlug || ""
+        })
+        .setEndpoint(setImageEndpoint)
+        .onSubmit(setImageEndpoint, {
+          useAuth: true,
+          preSubmit: () => this.displayMessage("uploading-file"),
+          onSuccess: () => {
+            setTimeout(() => window.location.reload(), 1500);
           }
-        } catch (error) {
-          console.error("Error submitting form:", error);
-          if (webflowForm.isAutoMode()) {
-            webflowForm.setState(FormState.Error);
-          }
-        }
-      });
-    }
-    if (!setImageForm) {
-      console.log('[Listings] #set-image form not found.');
+        });
     }
 
     // Instantiate and handle form submission for #set-certificate
-    const setCertificateForm = document.querySelector("#set-certificate");
+    const setCertificateForm = WebflowForm.tryCreateFromId("set-certificate");
     if (setCertificateForm) {
       console.log('[Listings] Found #set-certificate form. Mounting handler...');
-      const webflowForm = new WebflowForm(setCertificateForm as HTMLElement);
-      const form = webflowForm.getForm();
-
-      // Add hidden inputs for memberstackId and listingId
-      const memberstackIdInput = document.createElement("input");
-      memberstackIdInput.type = "hidden";
-      memberstackIdInput.name = "memberstackId";
-      memberstackIdInput.value = config.memberstackId;
-      form.appendChild(memberstackIdInput);
-
-      const listingIdInput = document.createElement("input");
-      listingIdInput.type = "hidden";
-      listingIdInput.name = "listingId";
-      listingIdInput.value = this.pageInfo.itemSlug || "";
-      form.appendChild(listingIdInput);
-
-      console.log("Added hidden inputs to certificate form:");
-      console.log(" memberstackId:", memberstackIdInput.value);
-      console.log(" listingId:", listingIdInput.value);
-
-      // Resolve endpoint and log for visibility
       const certificateEndpoint = api.url('/forms/upload-file');
-      form.action = certificateEndpoint;
       console.log('[Listings] Certificate upload endpoint:', certificateEndpoint);
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        this.displayMessage("uploading-file");
-        console.log("Set certificate form submitted");
-
-        const formData = new FormData(form);
-
-        try {
-          const response = await fetch(certificateEndpoint, {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            console.log("Certificate upload successful");
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Success);
-              // Refresh page after a short delay to show success message
-              setTimeout(() => {
-                window.location.reload();
-              }, 1500);
-            } else {
-              // In manual mode, refresh immediately without delay
-              window.location.reload();
-            }
-          } else {
-            const errorText = await response.text();
-            console.error("Certificate upload failed:", response.status, errorText);
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Error);
-            }
+      setCertificateForm
+        .addHiddenFields({
+          memberstackId: memberstackId,
+          listingId: this.pageInfo.itemSlug || ""
+        })
+        .setEndpoint(certificateEndpoint)
+        .onSubmit(certificateEndpoint, {
+          useAuth: true,
+          preSubmit: () => this.displayMessage("uploading-file"),
+          onSuccess: () => {
+            setTimeout(() => window.location.reload(), 1500);
           }
-        } catch (error) {
-          console.error("Error uploading certificate:", error);
-          if (webflowForm.isAutoMode()) {
-            webflowForm.setState(FormState.Error);
-          }
-        }
-      });
-    }
-    if (!setCertificateForm) {
-      console.log('[Listings] #set-certificate form not found.');
+        });
     }
 
     // Instantiate and handle form submission for #update-data
-    const updateDataForm = document.querySelector("#update-data");
+    const updateDataForm = WebflowForm.tryCreateFromId("update-data");
     if (updateDataForm) {
       console.log('[Listings] Found #update-data form. Mounting handler...');
-      const webflowForm = new WebflowForm(updateDataForm as HTMLElement);
-      const form = webflowForm.getForm();
-
-      // Add hidden inputs for memberstackId and listingId
-      const memberstackIdInput = document.createElement("input");
-      memberstackIdInput.type = "hidden";
-      memberstackIdInput.name = "memberstackId";
-      memberstackIdInput.value = config.memberstackId;
-      form.appendChild(memberstackIdInput);
-
-      const listingIdInput = document.createElement("input");
-      listingIdInput.type = "hidden";
-      listingIdInput.name = "listingId";
-      listingIdInput.value = this.pageInfo.itemSlug || "";
-      form.appendChild(listingIdInput);
-
-      console.log("Added hidden inputs to update-data form:");
-      console.log(" memberstackId:", memberstackIdInput.value);
-      console.log(" listingId:", listingIdInput.value);
-
-      // Resolve endpoint and log
       const updateEndpoint = api.url('/forms/update-listing');
       console.log('[Listings] Update listing endpoint:', updateEndpoint);
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        this.displayMessage("");
-        console.log("Update data form submitted");
-
-        const formData = new FormData(form);
-
-        try {
-          const response = await fetch(updateEndpoint, {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            console.log("Update listing successful");
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Success);
-              // Refresh page after a short delay to show success message
-              setTimeout(() => {
-                window.location.reload();
-              }, 1500);
-            } else {
-              // In manual mode, refresh immediately without delay
-              window.location.reload();
-            }
-          } else {
-            const errorText = await response.text();
-            console.error("Update listing failed:", response.status, errorText);
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Error);
-            }
+      updateDataForm
+        .addHiddenFields({
+          memberstackId: memberstackId,
+          listingId: this.pageInfo.itemSlug || ""
+        })
+        .onSubmit(updateEndpoint, {
+          useAuth: true,
+          preSubmit: () => this.displayMessage(""),
+          onSuccess: () => {
+            setTimeout(() => window.location.reload(), 1500);
           }
-        } catch (error) {
-          console.error("Error updating listing:", error);
-          if (webflowForm.isAutoMode()) {
-            webflowForm.setState(FormState.Error);
-          }
-        }
-      });
-    } else {
-      console.log('[Listings] #update-data form not found.');
+        });
     }
 
     // Instantiate and handle form submission for #add-multi-image
-    const addMultiImageForm = document.querySelector("#add-multi-image");
+    const addMultiImageForm = WebflowForm.tryCreateFromId("add-multi-image");
     if (addMultiImageForm) {
       console.log('[Listings] Found #add-multi-image form. Mounting handler...');
-      const webflowForm = new WebflowForm(addMultiImageForm as HTMLElement);
-      const form = webflowForm.getForm();
-
-      // Add hidden inputs for memberstackId and listingId
-      const memberstackIdInput = document.createElement("input");
-      memberstackIdInput.type = "hidden";
-      memberstackIdInput.name = "memberstackId";
-      memberstackIdInput.value = config.memberstackId;
-      form.appendChild(memberstackIdInput);
-
-      const listingIdInput = document.createElement("input");
-      listingIdInput.type = "hidden";
-      listingIdInput.name = "listingId";
-      listingIdInput.value = this.pageInfo.itemSlug || "";
-      form.appendChild(listingIdInput);
-
-      console.log("Added hidden inputs to add-multi-image form:");
-      console.log(" memberstackId:", memberstackIdInput.value);
-      console.log(" listingId:", listingIdInput.value);
-
-      // Resolve endpoint and log
       const addMultiImageEndpoint = api.url('/forms/upload-multi-image');
-      form.action = addMultiImageEndpoint;
       console.log('[Listings] Add multi-image endpoint:', addMultiImageEndpoint);
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        this.displayMessage("uploading-file");
-        console.log("Add multi-image form submitted");
-
-        const formData = new FormData(form);
-
-        try {
-          const response = await fetch(addMultiImageEndpoint, {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            console.log("Form submission successful");
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Success);
-              // Refresh page after a short delay to show success message
-              setTimeout(() => {
-                window.location.reload();
-              }, 1500);
-            } else {
-              // In manual mode, refresh immediately without delay
-              window.location.reload();
-            }
-          } else {
-            const errorText = await response.text();
-            console.error("Form submission failed:", response.status, errorText);
-            if (webflowForm.isAutoMode()) {
-              webflowForm.setState(FormState.Error);
-            }
+      addMultiImageForm
+        .addHiddenFields({
+          memberstackId: memberstackId,
+          listingId: this.pageInfo.itemSlug || ""
+        })
+        .setEndpoint(addMultiImageEndpoint)
+        .onSubmit(addMultiImageEndpoint, {
+          useAuth: true,
+          preSubmit: () => this.displayMessage("uploading-file"),
+          onSuccess: () => {
+            setTimeout(() => window.location.reload(), 1500);
           }
-        } catch (error) {
-          console.error("Error submitting form:", error);
-          if (webflowForm.isAutoMode()) {
-            webflowForm.setState(FormState.Error);
-          }
-        }
-      });
-    }
-    if (!addMultiImageForm) {
-      console.log('[Listings] #add-multi-image form not found.');
+        });
     }
 
-    // Find all buttons with class w-button
+    // Find all delete buttons and set up FIX trigger attributes
     const buttons = document.querySelectorAll("[sse-action='delete-multi-image']");
-    console.log("Found buttons:", buttons.length);
+    console.log("[Listings] Found delete buttons:", buttons.length);
 
     buttons.forEach((button) => {
       const itemIndex = this.getCollectionListItemIndex(button);
+      const listingId = this.pageInfo.itemSlug || "";
 
-button.setAttribute("item-slug", this.pageInfo.itemSlug || "");
-
-      if (itemIndex !== -1) {
-        // Set the itemIndex attribute on the button
-        button.setAttribute("item-index", itemIndex.toString());
-        console.log("Set itemIndex attribute:", itemIndex, "on button:", button);
+      if (itemIndex !== -1 && listingId) {
+        // Set up FIX trigger attributes
+        button.setAttribute("trigger:click", "delete-multi-image");
+        button.setAttribute("trigger:click:data:listing-id", listingId);
+        button.setAttribute("trigger:click:data:photo-index", itemIndex.toString());
+        console.log("[Listings] Configured delete button:", { listingId, photoIndex: itemIndex });
       }
-    });
-
-    // Handle delete button clicks
-    buttons.forEach((button) => {
-      button.addEventListener("click", (e) => {
-        e.preventDefault();        
-        this.handleDeleteButtonClick(button);
-      });
     });
 
     console.log("Listings page exec complete");
-  }
-
-  async handleDeleteButtonClick(button: Element): Promise<void> {
-    const memberstackId = config.memberstackId;
-    const listingId = button.getAttribute("item-slug") || "";
-    const photoIndex = button.getAttribute("item-index") || "";
-
-    console.log("Delete button clicked:");
-    console.log(" memberstackId:", memberstackId);
-    console.log(" listingId:", listingId);
-    console.log(" photoIndex:", photoIndex);
-
-    this.displayMessage("deleting-image");
-
-    try {
-      const response = await fetch(
-        api.endpoints.deleteMultiImage,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            memberstackId: memberstackId,
-            listingId: listingId,
-            photoIndex: photoIndex,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        console.log("Delete successful, refreshing page");
-        window.location.reload();
-      } else {
-        const errorText = await response.text();
-        console.error("Delete failed:", response.status, errorText);
-        alert(`Failed to delete image: ${response.status} ${errorText}`);
-      }
-    } catch (error) {
-      console.error("Error deleting image:", error);
-      alert(`Error deleting image: ${error}`);
-    }
   }
 }
 

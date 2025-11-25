@@ -1,3 +1,6 @@
+import { WebflowElementBase } from "./webflow-element-base";
+import { apiRequest } from "../utils/api-client";
+
 /**
  * WebflowForm - General purpose class for managing Webflow form states
  *
@@ -5,6 +8,10 @@
  * - Default: Only the form is visible
  * - Success: Only the success message (w-form-done) is visible
  * - Error: Both the form and error message (w-form-fail) are visible
+ *
+ * Supports initialization from either:
+ * - The .w-form wrapper div (finds the form within)
+ * - The <form> element directly (finds the wrapper parent)
  */
 
 export enum FormState {
@@ -13,7 +20,7 @@ export enum FormState {
   Error = "error",
 }
 
-export class WebflowForm {
+export class WebflowForm extends WebflowElementBase {
   private wrapperElement: HTMLElement;
   private formElement: HTMLFormElement;
   private successElement: HTMLElement | null;
@@ -21,6 +28,8 @@ export class WebflowForm {
   public autoMode: boolean;
 
   constructor(element: HTMLElement) {
+    super(element);
+
     // Determine if the element is the wrapper or the form itself
     if (element.classList.contains("w-form")) {
       this.wrapperElement = element;
@@ -52,6 +61,36 @@ export class WebflowForm {
 
     // Initialize to default state
     this.setState(FormState.Default);
+  }
+
+  /**
+   * Validates that the element is a form or w-form wrapper
+   */
+  protected validate(element: HTMLElement): void {
+    const isWrapper = element.classList.contains("w-form");
+    const isForm = element.tagName === "FORM";
+
+    if (!isWrapper && !isForm) {
+      throw new Error(
+        `Element must be either a .w-form wrapper or a <form> element. Received: ${element.tagName} with classes: ${element.className}`
+      );
+    }
+
+    // Additional validation: if it's a wrapper, must contain a form
+    if (isWrapper) {
+      const form = element.querySelector("form");
+      if (!form) {
+        throw new Error("w-form wrapper must contain a <form> element");
+      }
+    }
+
+    // Additional validation: if it's a form, must be within a wrapper
+    if (isForm) {
+      const wrapper = element.closest(".w-form");
+      if (!wrapper) {
+        throw new Error("<form> element must be within a .w-form wrapper");
+      }
+    }
   }
 
   /**
@@ -152,5 +191,103 @@ export class WebflowForm {
   reset(): void {
     this.formElement.reset();
     this.setState(FormState.Default);
+  }
+
+  /**
+   * Add a single hidden field to the form
+   * @param name The name attribute for the hidden input
+   * @param value The value for the hidden input
+   * @returns The created input element
+   */
+  addHiddenField(name: string, value: string): HTMLInputElement {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    this.formElement.appendChild(input);
+    return input;
+  }
+
+  /**
+   * Add multiple hidden fields to the form
+   * @param fields An object with key-value pairs for hidden fields
+   * @returns this (for chaining)
+   */
+  addHiddenFields(fields: Record<string, string>): this {
+    for (const name in fields) {
+      if (fields.hasOwnProperty(name)) {
+        this.addHiddenField(name, fields[name]);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Set the form action endpoint
+   * @param endpoint The URL to submit the form to
+   * @returns this (for chaining)
+   */
+  setEndpoint(endpoint: string): this {
+    this.formElement.action = endpoint;
+    return this;
+  }
+
+  /**
+   * Set up form submission handler with automatic success/error handling
+   * @param endpoint The URL to submit the form to
+   * @param options Configuration options for the submission
+   * @returns this (for chaining)
+   */
+  onSubmit(
+    endpoint: string,
+    options?: {
+      preSubmit?: () => void;
+      onSuccess?: (response: Response) => void | Promise<void>;
+      onError?: (error: string) => void;
+      method?: string;
+      useAuth?: boolean;
+      bearerToken?: string;
+    }
+  ): this {
+    this.formElement.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Call pre-submit hook
+      options?.preSubmit?.();
+
+      const formData = new FormData(this.formElement);
+
+      try {
+        const response = await apiRequest(endpoint, {
+          method: options?.method || "POST",
+          body: formData,
+          useAuth: options?.useAuth,
+          bearerToken: options?.bearerToken,
+        });
+
+        if (response.ok) {
+          console.log("Form submission successful");
+          if (this.autoMode) {
+            this.setState(FormState.Success);
+          }
+          await options?.onSuccess?.(response);
+        } else {
+          const errorText = await response.text();
+          console.error("Form submission failed:", response.status, errorText);
+          if (this.autoMode) {
+            this.setState(FormState.Error);
+          }
+          options?.onError?.(errorText);
+        }
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        if (this.autoMode) {
+          this.setState(FormState.Error);
+        }
+        options?.onError?.(error instanceof Error ? error.message : String(error));
+      }
+    });
+
+    return this;
   }
 }

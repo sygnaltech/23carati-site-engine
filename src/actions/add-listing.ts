@@ -5,7 +5,7 @@
 
 import { ActionBase, action, type TriggerData } from '@sygnal/sse-core';
 import { WebflowForm, FormState } from '../elements/webflow-form';
-import { config, api } from '../config';
+import { api } from '../config';
 import type { SubmitTriggerData } from '../triggers/trigger-submit';
 
 /**
@@ -28,31 +28,25 @@ export class ActionAddListing extends ActionBase {
 
     const data = triggerData as SubmitTriggerData;
     const fields = data.fields ?? {};
-
-    // Build FormData from serialized fields (ignoring files by design)
-    const formData = new FormData();
-    for (const key of Object.keys(fields)) {
-      const value = fields[key];
-      if (Array.isArray(value)) {
-        value.forEach(v => formData.append(key, v));
-      } else {
-        formData.append(key, value as string);
-      }
-    }
-
-    // Ensure memberstackId is present
-    if (!formData.has('memberstackId')) {
-      formData.append('memberstackId', config.memberstackId);
-    }
+    const headers = data.headers ?? {};
 
     const endpoint = api.url('/forms/create-listing');
     console.log('[FIX Action:Add-Listing] Submitting to endpoint:', endpoint);
+    console.log('[FIX Action:Add-Listing] Payload:', fields);
+    console.log('[FIX Action:Add-Listing] Using headers from trigger:', headers);
 
     const webflowForm = new WebflowForm(triggerElement);
     webflowForm.autoMode = false; // Disable auto mode for action-driven forms
 
     try {
-      const response = await fetch(endpoint, { method: 'POST', body: formData });
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(fields),
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json'
+        }
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
