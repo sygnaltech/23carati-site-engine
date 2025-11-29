@@ -10,7 +10,6 @@ declare const process: {
   env: {
     NODE_ENV: string;
     API_BASE_URL: string;
-    MEMBERSTACK_ID: string;
     API_REQUIRES_AUTH: string;
   };
 };
@@ -38,11 +37,6 @@ export const config = {
    * API base URL
    */
   apiBaseUrl: process.env.API_BASE_URL,
-
-  /**
-   * Memberstack ID for the current environment
-   */
-  memberstackId: process.env.MEMBERSTACK_ID,
 
   /**
    * Whether API endpoints require authentication

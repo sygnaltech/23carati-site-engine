@@ -53,7 +53,7 @@ export class ActionDeleteMultiImage extends ActionBase {
     // Get the loader overlay component and show it
     const [loaderOverlay] = window.componentManager?.getComponentsByType<LoaderOverlayComponent>('loader-overlay') ?? [];
     if (loaderOverlay) {
-      loaderOverlay.show('Deleting image...');
+      loaderOverlay.show('deleting-image');
     }
 
     try {

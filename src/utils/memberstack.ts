@@ -97,6 +97,30 @@ export async function getCurrentMemberId(): Promise<string | null> {
 }
 
 /**
+ * Decode a JWT token and return its payload
+ * @param token - JWT token string
+ * @returns Decoded payload object or null if invalid
+ */
+function decodeJWT(token: string): any {
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.error('[Memberstack] Invalid JWT format');
+      return null;
+    }
+
+    // Decode the payload (middle part)
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch (error) {
+    console.error('[Memberstack] Failed to decode JWT:', error);
+    return null;
+  }
+}
+
+/**
  * Get the current logged-in member's JWT token
  * @returns Promise<string | null> - JWT token or null if not logged in
  * @throws Error if SDK fails to load
@@ -114,6 +138,14 @@ export async function getCurrentMemberToken(): Promise<string | null> {
     }
 
     console.log('[Memberstack] Retrieved member token from cookie');
+
+    // Decode and log the JWT payload for inspection
+    const payload = decodeJWT(token);
+    if (payload) {
+      console.log('[Memberstack] JWT Payload:', payload);
+      console.log('[Memberstack] Token expires:', new Date(payload.exp * 1000).toISOString());
+    }
+
     return token;
   } catch (error) {
     console.error('[Memberstack] Failed to get member token:', error);
@@ -148,4 +180,43 @@ export async function isLoggedIn(): Promise<boolean> {
     console.error('[Memberstack] Failed to check login status:', error);
     return false;
   }
+}
+
+/**
+ * Debug helper: Inspect the current member's JWT token
+ * Call from browser console: window.inspectMemberstackJWT()
+ */
+export async function inspectMemberstackJWT(): Promise<void> {
+  console.log('=== Memberstack JWT Inspector ===');
+
+  const token = await getCurrentMemberToken();
+
+  if (!token) {
+    console.warn('No JWT token found. User may not be logged in.');
+    return;
+  }
+
+  console.log('Raw JWT:', token);
+  console.log('Token length:', token.length);
+
+  const payload = decodeJWT(token);
+  if (payload) {
+    console.log('Decoded Payload:', payload);
+
+    if (payload.exp) {
+      const expiresAt = new Date(payload.exp * 1000);
+      const now = new Date();
+      const isExpired = expiresAt < now;
+      console.log('Expires at:', expiresAt.toISOString());
+      console.log('Is expired:', isExpired);
+      console.log('Time until expiry:', Math.floor((expiresAt.getTime() - now.getTime()) / 1000 / 60), 'minutes');
+    }
+  }
+
+  console.log('=================================');
+}
+
+// Expose to window for console access
+if (typeof window !== 'undefined') {
+  (window as any).inspectMemberstackJWT = inspectMemberstackJWT;
 }
