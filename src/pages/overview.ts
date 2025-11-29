@@ -10,6 +10,7 @@ import { config, api } from "../config";
 import { LoaderOverlayComponent } from "../components/loader-overlay";
 
 @page("/wholesale/dashboard/overview")
+@page("/test/overview")
 export class ListingPage extends PageBase {
 
   protected onPrepare(): void {
