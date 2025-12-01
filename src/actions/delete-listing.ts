@@ -5,7 +5,8 @@
 
 import { LoaderOverlayComponent } from '../components/loader-overlay';
 import { ActionBase, action, type TriggerData } from '@sygnal/sse-core';
-import { config, api } from "../config";
+import { api } from "../config";
+import { apiRequest } from '../utils/api-client';
 
 /**
  * Action handler that deletes a listing via API call
@@ -72,14 +73,12 @@ export class ActionDeleteListing extends ActionBase {
       const deleteEndpoint = api.url('/forms/delete-listing');
       console.log('[Overview] Delete endpoint:', deleteEndpoint);
 
-      const response = await fetch(deleteEndpoint, {
+      const response = await apiRequest(deleteEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        useAuth: true,
+        body: {
           listingId: listingSlug
-        })
+        }
       });
 
       if (response.ok) {
